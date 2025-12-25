@@ -1,0 +1,15 @@
+# requerimientos para el proyecto (librerías necesarias para el proyecto)
+# se instalan con el comando: pip install -r requirements.txt
+# para actualizar las librerías se instalan con el comando: pip install --upgrade -r requirements.txt
+# para desinstalar una librería se desinstala con el comando: pip uninstall <nombre_de_la_libreria>
+
+# si necesitas instalar una librería, añade el nombre de la librería al final del archivo requirements.txt
+streamlit
+pandas
+scikit-learn
+sqlalchemy
+psycopg2-binary
+python-dotenv
+joblib
+matplotlib
+seaborn

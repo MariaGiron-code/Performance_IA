@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+env/
+
+# Variables de entorno (Seguridad)
+.env
+
+# Archivos de sistema
+.DS_Store
+Thumbs.db
+
+# Datos y modelos (Opcional solo si son muy pesados)
+# data/raw/*.csv PONEN EN EL .gitignore PARA QUE NO SE SUBAN AL REPOSITORIO SI SON DEMASIADO PESADOS

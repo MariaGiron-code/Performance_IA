@@ -1,0 +1,2 @@
+## para el CSV original o otro formato de datos que se vaya usar para entrenar el modelo
+# carga de la fuente de datos original
