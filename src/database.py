@@ -1,11 +1,3 @@
-# archivo de conexión a la base de datos
-# se usa para conectar a la base de datos
-# se usa para ejecutar las consultas a la base de datos
-# se usa para obtener los datos de la base de datos
-# se usa para guardar los datos en la base de datos
-# se usa para eliminar los datos de la base de datos
-# se usa para actualizar los datos de la base de datos
-
 import os
 from sqlalchemy import create_engine, text
 from dotenv import load_dotenv
@@ -50,7 +42,7 @@ def registrar_usuario(nombre, email, password):
         return False
 
 
-def validar_usuario(email, password):
+def login(email, password):
     query = text("SELECT id, nombre, password_hash from usarios where email = :email ")
 
     try:
