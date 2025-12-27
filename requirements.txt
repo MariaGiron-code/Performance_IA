@@ -13,3 +13,4 @@ python-dotenv
 joblib
 matplotlib
 seaborn
+bcrypt
