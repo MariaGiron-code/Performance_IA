@@ -1,50 +1,40 @@
 import streamlit as st
-from src.database import login, registrar_usuario
+from src.interface import vista_login, vista_registro
 
-# Configuración inicial de la página 
+# 1. Configuración de página (Página de inicio) como el index.html de una web
 st.set_page_config(page_title="EduGuard AI", layout="centered")
 
-def vista_login():
-    st.title("🔑 Iniciar Sesión")
-    email = st.text_input("Correo electrónico")
-    password = st.text_input("Contraseña", type="password")
-    
-    if st.button("Entrar"):
-        usuario = login(email, password)
-        if usuario:
-            st.session_state.logged_in = True
-            st.session_state.user_info = usuario
-            st.rerun() # Recarga la app para entrar 
-        else:
-            st.error("Credenciales incorrectas")
-
-def vista_registro():
-    st.title("📝 Registro de Usuario")
-    nombre = st.text_input("Nombre completo")
-    email = st.text_input("Correo electrónico")
-    password = st.text_input("Contraseña", type="password")
-    
-    if st.button("Registrarme"):
-        if registrar_usuario(nombre, email, password):
-            st.success("¡Cuenta creada! Ya puedes iniciar sesión.")
-        else:
-            st.error("Error al registrar. El email podría ya estar en uso.")
-
-# --- LÓGICA DE NAVEGACIÓN ---
+# 2. Inicializar el estado de la sesión si no existe
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 
+# 3. Lógica de Navegación Principal
 if not st.session_state.logged_in:
-    menu = st.sidebar.selectbox("Selecciona una opción", ["Login", "Registro"])
-    if menu == "Login":
+    # Menú lateral para usuarios no autenticados
+    menu = st.sidebar.selectbox("Selecciona una opción", ["Iniciar Sesión", "Registro"], key="menu_navegacion_principal")
+    
+    if menu == "Iniciar Sesión":
         vista_login()
     else:
         vista_registro()
 else:
+    
+    # --- VISTA PARA USUARIOS LOGUEADOS ---
+    st.sidebar.image("assets/logo.png", width=100) 
     st.sidebar.write(f"Bienvenido, **{st.session_state.user_info['nombre']}**")
-    if st.sidebar.button("Cerrar Sesión"):
+    
+    opcion = st.sidebar.radio("Navegación", ["Realizar Predicción", "Historial de Alumnos"], key="nav_radio")
+    
+    if st.sidebar.button("Cerrar Sesión", key="btn_cerrar_sesion"):
         st.session_state.logged_in = False
         st.rerun()
-    
-    # Aquí irán las otras secciones (Predicción e Historial)
-    st.write("### ¡Ya estás dentro del sistema!")
+
+    # Secciones del sistema
+    if opcion == "Realizar Predicción":
+        st.write("## Análisis de Riesgo Académico")
+        # Aquí llamaremos a la función que diseñaremos a continuación
+        st.info("Próximamente: Formulario de predicción basado en el dataset.")
+        
+    elif opcion == "Historial de Alumnos":
+        st.write("## Historial de Predicciones")
+        st.write("Aquí se mostrarán los datos guardados en Neon.")

@@ -7,17 +7,15 @@ def local_css(estilo):
         st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
 local_css("assets/style.css")
 
-# Configuración inicial de la página 
-st.set_page_config(page_title="EduGuard AI", layout="centered")
 
 def vista_login():
     
     with st.container():
-        st.title("🔑 Iniciar Sesión")
-        email = st.text_input("Correo electrónico")
-        password = st.text_input("Contraseña", type="password")
+        st.title(" Iniciar Sesión")
+        email = st.text_input("Correo electrónico", key="login_email")
+        password = st.text_input("Contraseña", type="password", key="login_password")
         
-        if st.button("Entrar"):
+        if st.button("Entrar", key="btn_login"):
             if not email or not password:
                 st.toast(" Por favor, completa todos los campos.")
             else:
@@ -34,14 +32,14 @@ def vista_login():
 def vista_registro():
     
     with st.container():
-        st.title("📝 Registro de Usuario")
-        nombre = st.text_input("Nombre completo")
-        email = st.text_input("Correo electrónico")
-        password = st.text_input("Contraseña", type="password")
+        st.title(" Registro de Usuario")
+        nombre = st.text_input("Nombre completo", key="reg_nombre")
+        email = st.text_input("Correo electrónico", key="reg_email")
+        password = st.text_input("Contraseña", type="password", key="reg_password")
         
-        if st.button("Registrarme"):
+        if st.button("Registrarme", key="btn_registro"):
             if not nombre or not email or not password:
-                st.error(" Todos los campos son obligatorios para el registro.")
+                st.toast(" Todos los campos son obligatorios para el registro.")
             
             elif "@" not in email:
                 st.warning("Por favor, ingresa un correo electrónico válido.")
@@ -53,23 +51,3 @@ def vista_registro():
                 
                 else:
                     st.error(" Error: El correo ya está registrado o hubo un problema con la base de datos.")
-
-# --- LÓGICA DE NAVEGACIÓN ---
-
-if "logged_in" not in st.session_state: # Si no hay sesión iniciada, se inicia la sesión
-    st.session_state.logged_in = False
-
-if not st.session_state.logged_in: # Si no hay sesión iniciada, se muestra el menú de inicio de sesión y registro
-    menu = st.sidebar.selectbox("Selecciona una opción", ["Iniciar Sesión", "Registro"])
-    if menu == "Iniciar Sesión":
-        vista_login()
-    else:
-        vista_registro()
-else:
-    st.sidebar.write(f"Bienvenido, **{st.session_state.user_info['nombre']}**")
-    if st.sidebar.button("Cerrar Sesión"):
-        st.session_state.logged_in = False
-        st.rerun()
-    
-    # Aquí irán las otras secciones (Predicción e Historial)
-    st.write("### ¡Ya estás dentro del sistema!")
