@@ -1,0 +1,6 @@
+[theme]
+primaryColor = "#2E5BFF"         # Azul vibrante para botones
+backgroundColor = "#F0F2F6"      # Gris muy claro para el fondo
+secondaryBackgroundColor = "#FFFFFF" # Blanco para tarjetas y inputs
+textColor = "#1F2937"            # Gris oscuro para lectura
+font = "sans serif"

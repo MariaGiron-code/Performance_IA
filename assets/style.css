@@ -1,0 +1,30 @@
+/* Estilo para los botones principales */
+.stButton>button {
+    border-radius: 20px;
+    border: none;
+    background-color: #1f1f21;
+    color: white;
+    font-weight: bold;
+    padding: 0.6rem 2rem;
+    transition: all 0.3s ease;
+}
+
+.stButton>button:hover {
+    background-color: #1A3DBF;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+/* Contenedores tipo "Tarjeta" para Login y Formularios */
+div[data-testid="stVerticalBlock"] > div:has(div.element-container) {
+    background-color: white;
+    padding: 1rem;
+    border-radius: 15px;
+}
+
+/* Personalización del título */
+h1 {
+    color: #1F2937;
+    font-family: 'Inter', sans-serif;
+    text-align: center;
+}
