@@ -1,40 +1,55 @@
 import streamlit as st
 from src.interface import vista_login, vista_registro
 
-# 1. Configuración de página (Página de inicio) como el index.html de una web
+# 1. Configuración de página 
 st.set_page_config(page_title="EduGuard AI", layout="centered")
 
-# 2. Inicializar el estado de la sesión si no existe
+# 2. Inicializar el estado de la sesión
+# 'logged_in' controla si el usuario entró al sistema
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 
+# 'auth_mode' controla si mostramos Login o Registro (Navegación interna)
+if "auth_mode" not in st.session_state:
+    st.session_state.auth_mode = "login"
+
 # 3. Lógica de Navegación Principal
 if not st.session_state.logged_in:
-    # Menú lateral para usuarios no autenticados
-    menu = st.sidebar.selectbox("Selecciona una opción", ["Iniciar Sesión", "Registro"], key="menu_navegacion_principal")
-    
-    if menu == "Iniciar Sesión":
+  
+    # Dependiendo de auth_mode, llamamos a una vista o la otra
+    if st.session_state.auth_mode == "login":
         vista_login()
     else:
         vista_registro()
+
 else:
-    
-    # --- VISTA PARA USUARIOS LOGUEADOS ---
-    st.sidebar.image("assets/logo.png", width=100) 
+    # --- VISTA PARA USUARIOS LOGUEADOS (Panel de Control) Dashboard principal ---
+  
+    try:
+        st.sidebar.image("public/logo.png", width=100) 
+    except:
+        st.sidebar.write("🎓 **EduGuard AI**")
+        
     st.sidebar.write(f"Bienvenido, **{st.session_state.user_info['nombre']}**")
     
-    opcion = st.sidebar.radio("Navegación", ["Realizar Predicción", "Historial de Alumnos"], key="nav_radio")
+    opcion = st.sidebar.radio(
+        "Navegación", 
+        ["Realizar Predicción", "Historial de Alumnos"], 
+        key="nav_radio"
+    )
     
+    st.sidebar.markdown("---")
     if st.sidebar.button("Cerrar Sesión", key="btn_cerrar_sesion"):
         st.session_state.logged_in = False
+        st.session_state.auth_mode = "login" # Resetear para el siguiente inicio
         st.rerun()
 
-    # Secciones del sistema
+    # Secciones del sistema según la opción del radio
     if opcion == "Realizar Predicción":
-        st.write("## Análisis de Riesgo Académico")
-        # Aquí llamaremos a la función que diseñaremos a continuación
-        st.info("Próximamente: Formulario de predicción basado en el dataset.")
+        st.write("## 🔍 Análisis de Riesgo Académico")
+        # Aquí llamaremos a la función del formulario más adelante
+        st.info("El modelo de IA está listo. Pendiente vincular el formulario de datos.")
         
     elif opcion == "Historial de Alumnos":
-        st.write("## Historial de Predicciones")
-        st.write("Aquí se mostrarán los datos guardados en Neon.")
+        st.write("## 📚 Historial de Predicciones")
+        st.write("Consulta aquí los registros previos almacenados en la nube.")
