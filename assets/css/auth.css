@@ -1,0 +1,160 @@
+/* ESTILOS PARA FORMULARIOS DE LOGIN Y REGISTRO */
+
+/* Sección del logo - izquierda (50% del ancho) */
+.login-logo-section,
+.registro-logo-section {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: calc(100vh - 4rem);
+    padding: 0;
+}
+
+.login-logo-section img,
+.registro-logo-section img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+}
+
+/* Sección del formulario - derecha (50% del ancho) */
+.login-form-section,
+.registro-form-section {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: calc(100vh - 4rem);
+    padding: 2rem 2rem 2rem 4rem;
+}
+
+/* Títulos del formulario */
+.login-form-section .form-title,
+.registro-form-section .form-title {
+    text-align: left;
+    color: #1F2937;
+    font-size: 1.75rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    margin-top: 0;
+}
+
+.login-form-section .form-subtitle,
+.registro-form-section .form-subtitle {
+    text-align: left;
+    color: #6B7280;
+    font-size: 0.9rem;
+    margin-bottom: 2rem;
+    margin-top: 0;
+}
+
+/* Campos de entrada - solo dentro de las secciones de formulario */
+.login-form-section .stTextInput > div > div > input,
+.registro-form-section .stTextInput > div > div > input {
+    border-radius: 8px;
+    border: 1px solid #D1D5DB;
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
+    width: 100%;
+}
+
+.login-form-section .stTextInput > div > div > input:focus,
+.registro-form-section .stTextInput > div > div > input:focus {
+    border-color: #4A90E2;
+    box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+    outline: none;
+}
+
+.login-form-section .stTextInput label,
+.registro-form-section .stTextInput label {
+    color: #374151;
+    font-weight: 500;
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+}
+
+/* Botones principales - solo dentro de las secciones de formulario */
+.main-button .stButton > button {
+    width: 100%;
+    border-radius: 8px;
+    border: none;
+    background-color: #4A90E2;
+    color: white;
+    font-weight: 600;
+    padding: 0.75rem 2rem;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    margin-top: 1rem;
+}
+
+.main-button .stButton > button:hover {
+    background-color: #357ABD;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
+}
+
+/* Links de navegación - solo dentro de las secciones de formulario */
+.login-form-section .nav-link,
+.registro-form-section .nav-link {
+    text-align: left;
+    margin-top: 1.5rem;
+    color: #0855F8;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.login-form-section .nav-link .stButton,
+.registro-form-section .nav-link .stButton {
+    display: inline-block;
+    margin-left: 0.25rem;
+    margin-top: 0;
+}
+
+.login-form-section .nav-link .stButton > button,
+.registro-form-section .nav-link .stButton > button {
+    border: none;
+    box-shadow: none;
+    padding: 0;
+    font-weight: 500;
+    font-size: 0.9rem;
+    transform: none;
+    width: auto;
+    height: auto;
+    min-height: auto;
+    margin: 0;
+}
+
+.login-form-section .nav-link .stButton > button:hover,
+.registro-form-section .nav-link .stButton > button:hover {
+    background-color: transparent !important;
+    text-decoration: underline;
+    transform: none !important;
+    box-shadow: none !important;
+    color: #357ABD !important;
+}
+
+/* Espaciado entre campos - solo dentro de las secciones de formulario */
+.login-form-section .element-container,
+.registro-form-section .element-container {
+    margin-bottom: 1.25rem;
+}
+
+/* Asegurar que las columnas ocupen 50% cada una y no afecten otros componentes */
+.login-logo-section,
+.registro-logo-section,
+.login-form-section,
+.registro-form-section {
+    box-sizing: border-box;
+}
+
+/* Asegurar que las columnas de Streamlit ocupen la proporción correcta (50% logo, 50% formulario) */
+div[data-testid="column"]:has(.login-logo-section),
+div[data-testid="column"]:has(.registro-logo-section),
+div[data-testid="column"]:has(.login-form-section),
+div[data-testid="column"]:has(.registro-form-section) {
+    flex: 1 1 50% !important;
+    max-width: 50% !important;
+}
+

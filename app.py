@@ -1,8 +1,9 @@
 import streamlit as st
-from src.interface import vista_login, vista_registro
+from src.views.auth import vista_login, vista_registro
 
-# 1. Configuración de página 
-st.set_page_config(page_title="EduGuard AI", layout="centered")
+# 1. Configuración de página (index.html de la app)
+st.set_page_config(page_title="EduGuard AI", page_icon="public/logo.png", layout="centered")
+
 
 # 2. Inicializar el estado de la sesión
 # 'logged_in' controla si el usuario entró al sistema
