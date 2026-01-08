@@ -40,37 +40,70 @@ def registrar_usuario(nombre, email, password):
 
 
 def login(email, password):
-    query = text("SELECT id, nombre, password_hash from usuarios where email = :email ")
+    query = text("SELECT id, nombre, email, password_hash from usuarios where email = :email ")
 
     try:
         with engine.connect() as conn:
             result = conn.execute(query, {"email": email}).fetchone()
 
             if result:
-                user_id, nombre, hash_almacenado = result
+                user_id, nombre, user_email, hash_almacenado = result
                 # Convertir el hash string a bytes para la verificación
                 hash_bytes = hash_almacenado.encode('utf-8') if isinstance(hash_almacenado, str) else hash_almacenado
-                
+
                 if bcrypt.checkpw(password.encode('utf-8'), hash_bytes):
-                    return {"id": user_id, "nombre": nombre}  # Login exitoso
-                
+                    return {"id": user_id, "nombre": nombre, "email": user_email}  # Login exitoso
+
                 return None  # Contraseña incorrecta
-            
+
             return None  # Email no encontrado
-    
+
     except Exception as e:
         print(f"Error al iniciar sesión: {e}")
         return None
 
+def cambiar_contraseña(email, contraseña_actual, nueva_contraseña):
+    """Cambia la contraseña del usuario verificando la actual."""
+    # Primero, obtener el hash actual
+    query_select = text("SELECT password_hash FROM usuarios WHERE email = :email")
+
+    try:
+        with engine.connect() as conn:
+            result = conn.execute(query_select, {"email": email}).fetchone()
+
+            if result:
+                hash_almacenado = result[0]
+                # Verificar la contraseña actual
+                if bcrypt.checkpw(contraseña_actual.encode('utf-8'), hash_almacenado.encode('utf-8')):
+                    # Hashear la nueva contraseña
+                    bytes_nueva = nueva_contraseña.encode('utf-8')
+                    salida = bcrypt.gensalt()
+                    nuevo_hash = bcrypt.hashpw(bytes_nueva, salida).decode('utf-8')
+
+                    # Actualizar en la base de datos
+                    query_update = text("UPDATE usuarios SET password_hash = :nuevo_hash WHERE email = :email")
+                    with engine.begin() as conn_update:
+                        conn_update.execute(query_update, {"nuevo_hash": nuevo_hash, "email": email})
+                    return True  # Cambio exitoso
+                else:
+                    return False  # Contraseña actual incorrecta
+            else:
+                return False  # Usuario no encontrado
+
+    except Exception as e:
+        print(f"Error al cambiar contraseña: {e}")
+        return False
+
+
 def guardar_prediccion(usuario_id, nombre_est, nota, asist, socio, umbral, prob, es_riesgo):
     """Guarda una nueva predicción en Neon usando SQLAlchemy."""
     query = text("""
-        INSERT INTO historial_predicciones 
-        (usuario_id, nombre_estudiante, nota_promedio, asistencia_porcentaje, 
+        INSERT INTO historial_predicciones
+        (usuario_id, nombre_estudiante, nota_promedio, asistencia_porcentaje,
          nivel_socioeconomico, umbral_decision, probabilidad_riesgo, es_riesgo_alto)
         VALUES (:usuario_id, :nombre_est, :nota, :asist, :socio, :umbral, :prob, :es_riesgo)
     """)
-    
+
     try:
         with engine.begin() as conn: # .begin() hace el commit automáticamente
             conn.execute(query, {
@@ -85,4 +118,4 @@ def guardar_prediccion(usuario_id, nombre_est, nota, asist, socio, umbral, prob,
             })
             print(" Predicción guardada exitosamente en Neon.")
     except Exception as e:
-        print(f"Error al guardar en la base de datos: {e}") 
+        print(f"Error al guardar en la base de datos: {e}")
