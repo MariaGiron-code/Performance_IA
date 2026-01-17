@@ -6,5 +6,3 @@
 # se usa para cargar las funciones necesarias
 # se usa para cargar las clases necesarias
 # se usa para cargar las variables necesarias etc
-
-import streamlit as st

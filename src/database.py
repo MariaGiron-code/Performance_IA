@@ -2,6 +2,7 @@ import os
 from sqlalchemy import create_engine, text
 from dotenv import load_dotenv
 import bcrypt
+import json 
 
 load_dotenv() 
 
@@ -95,27 +96,32 @@ def cambiar_contraseña(email, contraseña_actual, nueva_contraseña):
         return False
 
 
-def guardar_prediccion(usuario_id, nombre_est, nota, asist, socio, umbral, prob, es_riesgo):
-    """Guarda una nueva predicción en Neon usando SQLAlchemy."""
+# Guardar historial de predicciones
+def guardar_prediccion(usuario_id, nombre_est, datos_dict, prob, resultado, umbral):
+    """
+    Guarda la predicción en la Base de datos. 
+    'datos_dict' contiene las 26 variables enviadas al modelo.
+    """
     query = text("""
-        INSERT INTO historial_predicciones
-        (usuario_id, nombre_estudiante, nota_promedio, asistencia_porcentaje,
-         nivel_socioeconomico, umbral_decision, probabilidad_riesgo, es_riesgo_alto)
-        VALUES (:usuario_id, :nombre_est, :nota, :asist, :socio, :umbral, :prob, :es_riesgo)
+        INSERT INTO historial_predicciones 
+        (usuario_id, nombre_estudiante, datos_entrada, probabilidad, resultado_ia, umbral_usado)
+        VALUES (:usuario_id, :nombre_est, :datos_json, :prob, :res, :umbral)
     """)
-
+    
     try:
-        with engine.begin() as conn: # .begin() hace el commit automáticamente
+        # Convertimos el diccionario de Python a una cadena JSON para Postgres
+        datos_json = json.dumps(datos_dict)
+        
+        with engine.begin() as conn:
             conn.execute(query, {
                 "usuario_id": usuario_id,
                 "nombre_est": nombre_est,
-                "nota": nota,
-                "asist": asist,
-                "socio": socio,
-                "umbral": umbral,
+                "datos_json": datos_json,
                 "prob": prob,
-                "es_riesgo": es_riesgo
+                "res": resultado,
+                "umbral": umbral
             })
-            print(" Predicción guardada exitosamente en Neon.")
+            return True
     except Exception as e:
-        print(f"Error al guardar en la base de datos: {e}")
+        print(f"Error al guardar historial: {e}")
+        return False
