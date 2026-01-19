@@ -1,0 +1,10 @@
+{
+    "terminal.integrated.profiles.windows": {
+        "PowerShell": {
+            "source": "PowerShell",
+            "icon": "terminal-powershell",
+            "args": ["-NoExit", "-Command", "& { .\\venv\\Scripts\\Activate.ps1; $host.ui.RawUI.WindowTitle = 'VS Code Terminal' }"]
+        }
+    },
+    "terminal.integrated.defaultProfile.windows": "PowerShell"
+}

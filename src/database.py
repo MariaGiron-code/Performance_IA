@@ -117,9 +117,9 @@ def guardar_prediccion(usuario_id, nombre_est, datos_dict, prob, resultado, umbr
                 "usuario_id": usuario_id,
                 "nombre_est": nombre_est,
                 "datos_json": datos_json,
-                "prob": prob,
+                "prob": float(prob),  # Convertir a float de Python para SQLAlchemy
                 "res": resultado,
-                "umbral": umbral
+                "umbral": float(umbral)  
             })
             return True
     except Exception as e:
