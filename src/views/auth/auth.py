@@ -1,5 +1,5 @@
 import streamlit as st
-from src.database import login, registrar_usuario
+import requests  # Para consumir la API
 
 # Carga del estilo CSS 
 def local_css(estilo):
@@ -36,13 +36,23 @@ def vista_login():
             if not email or not password:
                 st.toast("Por favor, completa todos los campos.")
             else:
-                usuario = login(email, password)
-                if usuario:
-                    st.session_state.logged_in = True
-                    st.session_state.user_info = usuario
-                    st.rerun()
-                else:
-                    st.error("Credenciales incorrectas.")
+                try:
+                    # Consumir la API para login
+                    response = requests.get("http://localhost:8000/users/me", auth=(email, password))
+                    if response.status_code == 200:
+                        user_data = response.json()
+                        st.session_state.logged_in = True
+                        st.session_state.user_info = {
+                            "id": user_data["id"],
+                            "nombre": user_data["username"],  # Ajustar si es necesario
+                            "email": user_data["email"]
+                        }
+                        st.session_state.user_password = password  # Almacenar contraseña para llamadas API
+                        st.rerun()
+                    else:
+                        st.error("Credenciales incorrectas o error en la API.")
+                except requests.exceptions.RequestException as e:
+                    st.error(f"Error conectando a la API: {e}")
         st.markdown('</div>', unsafe_allow_html=True)
 
         # Link de navegación al registro
@@ -88,12 +98,22 @@ def vista_registro():
                 st.warning("Por favor, ingresa un correo electrónico válido.")
 
             else:
-                if registrar_usuario(nombre, email, password):
-                    st.success("¡Cuenta creada con éxito! Ahora puedes ir al Login.")
-                    st.toast("Usuario registrado correctamente")
-
-                else:
-                    st.error("Error: El correo ya está registrado o hubo un problema con la base de datos.")
+                try:
+                    # Consumir la API para registro
+                    payload = {
+                        "username": nombre,  # Usar nombre como username
+                        "email": email,
+                        "password": password
+                    }
+                    response = requests.post("http://localhost:8000/users", json=payload)
+                    if response.status_code == 201:
+                        st.success("¡Cuenta creada con éxito! Ahora puedes ir al Login.")
+                        st.toast("Usuario registrado correctamente")
+                    else:
+                        error_detail = response.json().get("detail", "Error desconocido")
+                        st.error(f"Error en el registro: {error_detail}")
+                except requests.exceptions.RequestException as e:
+                    st.error(f"Error conectando a la API: {e}")
         st.markdown('</div>', unsafe_allow_html=True)
         
         # Link de navegación al login

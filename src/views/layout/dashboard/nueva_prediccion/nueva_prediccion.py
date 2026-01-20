@@ -1,7 +1,5 @@
 import streamlit as st
-from src.logic import ejecutar_prediccion
-# Importar función para guardar predicciones en la base de datos
-from src.database import guardar_prediccion
+import requests  # Para consumir la API
 
 def vista_nueva_prediccion():
     # Aplicar estilos CSS
@@ -169,22 +167,61 @@ def vista_nueva_prediccion():
                 'Tasa_inflacion': tasa_inflacion,
                 'PIB': pib
             }
-            probabilidad = ejecutar_prediccion(datos)
+            
+            # Integración con la API de FastAPI
+            # Preparar payload con todos los datos requeridos
+            payload = {
+                "nombre_estudiante": nombre_estudiante,
+                "umbral": umbral,
+                "Modo_solicitud": datos['Modo_solicitud'],
+                "Orden_solicitud": datos['Orden_solicitud'],
+                "Carrera": datos['Carrera'],
+                "Asistencia_diurna_nocturna": datos['Asistencia_diurna_nocturna'],
+                "Calificacion_previa": datos['Calificacion_previa'],
+                "Calificacion_madre": datos['Calificacion_madre'],
+                "Calificacion_padre": datos['Calificacion_padre'],
+                "Ocupacion_madre": datos['Ocupacion_madre'],
+                "Ocupacion_padre": datos['Ocupacion_padre'],
+                "Desplazado": datos['Desplazado'],
+                "Deudor": datos['Deudor'],
+                "Pagos_al_dia": datos['Pagos_al_dia'],
+                "Genero": datos['Genero'],
+                "Becado": datos['Becado'],
+                "Edad_al_matricularse": datos['Edad_al_matricularse'],
+                "Unidades_1er_sem_matriculadas": datos['Unidades_1er_sem_matriculadas'],
+                "Unidades_1er_sem_evaluaciones": datos['Unidades_1er_sem_evaluaciones'],
+                "Unidades_1er_sem_aprobadas": datos['Unidades_1er_sem_aprobadas'],
+                "Unidades_1er_sem_nota": datos['Unidades_1er_sem_nota'],
+                "Unidades_2do_sem_matriculadas": datos['Unidades_2do_sem_matriculadas'],
+                "Unidades_2do_sem_evaluaciones": datos['Unidades_2do_sem_evaluaciones'],
+                "Unidades_2do_sem_aprobadas": datos['Unidades_2do_sem_aprobadas'],
+                "Unidades_2do_sem_nota": datos['Unidades_2do_sem_nota'],
+                "Tasa_desempleo": datos['Tasa_desempleo'],
+                "Tasa_inflacion": datos['Tasa_inflacion'],
+                "PIB": datos['PIB']
+            }
+            
+            try:
+                # Hacer request a la API usando credenciales del usuario logueado
+                user_email = st.session_state.user_info["email"]
+                user_password = st.session_state.user_password
+                response = requests.post("http://localhost:8000/predict", json=payload, auth=(user_email, user_password))
+                if response.status_code == 200:
+                    result = response.json()
+                    probabilidad = result["probability"]
+                    resultado = result["prediction"]
+                else:
+                    st.error(f"Error en la API: {response.status_code} - {response.text}")
+                    return
+            except requests.exceptions.RequestException as e:
+                st.error(f"Error conectando a la API: {e}")
+                return
+            
             if probabilidad is not None:
-                resultado = "Desertor" if probabilidad > umbral else "No Desertor"
-                
                 st.success(f"Probabilidad de deserción: {probabilidad:.2%}")
                 st.info(f"Resultado con umbral {umbral:.2f}: {resultado}")
                 
-                # Guardar la predicción en la base de datos si el usuario está identificado
-                usuario_id = st.session_state.user_info.get('id')
-                if usuario_id:
-                    if guardar_prediccion(usuario_id, nombre_estudiante, datos, probabilidad, resultado, umbral):
-                        st.success("Predicción guardada en el historial.")
-                    else:
-                        st.error("Error al guardar la predicción.")
-                else:
-                    st.error("Usuario no identificado.")
+              
                 
                 # Gauge visual actualizado con el umbral ajustado
                 import plotly.graph_objects as go

@@ -15,3 +15,6 @@ matplotlib
 seaborn
 bcrypt
 plotly
+fastapi # Framework principal para construir la API.
+uvicorn  # Servidor ASGI para correr la API (un server ASGI es un servidor asíncrono).
+pydantic # Validación de datos y manejo de configuraciones de la API.
