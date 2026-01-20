@@ -21,7 +21,7 @@ def vista_dashboard():
     
     opcion = st.sidebar.radio(
         "Menú de opciones",
-        ["Panel de Monitoreo","Nueva Predicción", "Métricas del modelo", "Cambiar Contraseña"],
+        ["Panel de Monitoreo","Nueva Predicción", "Métricas del modelo", "Perfil", "Cambiar Contraseña"],
         key="nav_dashboard"
     )
     
@@ -37,11 +37,11 @@ def vista_dashboard():
         vista_panel_monitoreo()
         
     elif opcion == "Nueva Predicción":
-        from .nueva_prediccion.nueva_prediccion import vista_nueva_prediccion
+        from .prediccion.nueva_prediccion import vista_nueva_prediccion
         vista_nueva_prediccion()
         
     elif opcion == "Métricas del modelo":
-        from .metricas_modelo.metricas_modelo import vista_metricas_modelo
+        from .metricas.metricas_modelo import vista_metricas_modelo
         vista_metricas_modelo()
         
     elif opcion == "Cambiar Contraseña":
