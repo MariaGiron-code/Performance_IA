@@ -15,6 +15,7 @@ matplotlib
 seaborn
 bcrypt
 plotly
+shap # Librería para explicabilidad de modelos ML utilizando valores SHAP(los valores SHAP ayudan a entender la contribución de cada característica en las predicciones del modelo).
 fastapi # Framework principal para construir la API.
 uvicorn  # Servidor ASGI para correr la API (un server ASGI es un servidor asíncrono).
 pydantic # Validación de datos y manejo de configuraciones de la API.

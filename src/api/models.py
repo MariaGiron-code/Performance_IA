@@ -35,6 +35,7 @@ class PrediccionRequest(BaseModel):
 class PrediccionResponse(BaseModel):
     prediction: str  # "Desertor" or "No Desertor"
     probability: float
+    explanations: Dict[str, float]  # Diccionario de variable: contribución SHAP
 
 class UsuarioRequest(BaseModel):
     username: str

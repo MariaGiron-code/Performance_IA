@@ -1,5 +1,4 @@
 import streamlit as st
-
 # Carga del estilo CSS para el dashboard
 def local_css(estilo):
     with open(estilo) as f:
@@ -21,7 +20,7 @@ def vista_dashboard():
     
     opcion = st.sidebar.radio(
         "Menú de opciones",
-        ["Panel de Monitoreo","Nueva Predicción", "Métricas del modelo", "Perfil", "Cambiar Contraseña"],
+        ["Panel de Monitoreo","Nueva Predicción", "Métricas del modelo", "Cambiar Contraseña"],
         key="nav_dashboard"
     )
     

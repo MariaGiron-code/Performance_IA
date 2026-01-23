@@ -210,6 +210,7 @@ def vista_nueva_prediccion():
                     result = response.json()
                     probabilidad = result["probability"]
                     resultado = result["prediction"]
+                    explicaciones = result["explanations"]
                 else:
                     st.error(f"Error en la API: {response.status_code} - {response.text}")
                     return
@@ -236,6 +237,18 @@ def vista_nueva_prediccion():
                                {'range': [umbral*100, 100], 'color': "red"}]}
                 ))
                 st.plotly_chart(fig)
+
+                # Sección de explicaciones
+                st.subheader("Razones de la Predicción")
+                st.info("Las siguientes variables influyeron más en la clasificación del estudiante. Valores positivos aumentan la probabilidad de deserción, negativos la disminuyen.")
+
+                # Ordenar por importancia absoluta
+                sorted_explicaciones = sorted(explicaciones.items(), key=lambda x: abs(x[1]), reverse=True)
+
+                # Mostrar top 10
+                for var, contrib in sorted_explicaciones[:10]:
+                    color = "red" if contrib > 0 else "green"
+                    st.markdown(f"- **{var}**: {contrib:.4f} ({'aumenta riesgo' if contrib > 0 else 'disminuye riesgo'})", unsafe_allow_html=True)
             else:
                 st.error("Error en la predicción. Verifica los datos.")
     

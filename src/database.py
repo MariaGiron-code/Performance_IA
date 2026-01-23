@@ -97,21 +97,23 @@ def cambiar_contraseña(email, contraseña_actual, nueva_contraseña):
 
 
 # Guardar historial de predicciones
-def guardar_prediccion(usuario_id, nombre_est, datos_dict, prob, resultado, umbral):
+def guardar_prediccion(usuario_id, nombre_est, datos_dict, prob, resultado, umbral, explicaciones):
     """
-    Guarda la predicción en la Base de datos. 
+    Guarda la predicción en la Base de datos.
     'datos_dict' contiene las 26 variables enviadas al modelo.
+    'explicaciones' es un diccionario con las contribuciones SHAP.
     """
     query = text("""
-        INSERT INTO historial_predicciones 
-        (usuario_id, nombre_estudiante, datos_entrada, probabilidad, resultado_ia, umbral_usado)
-        VALUES (:usuario_id, :nombre_est, :datos_json, :prob, :res, :umbral)
+        INSERT INTO historial_predicciones
+        (usuario_id, nombre_estudiante, datos_entrada, probabilidad, resultado_ia, umbral_usado, explicaciones)
+        VALUES (:usuario_id, :nombre_est, :datos_json, :prob, :res, :umbral, :explicaciones_json)
     """)
-    
+
     try:
         # Convertimos el diccionario de Python a una cadena JSON para Postgres
         datos_json = json.dumps(datos_dict)
-        
+        explicaciones_json = json.dumps(explicaciones)
+
         with engine.begin() as conn:
             conn.execute(query, {
                 "usuario_id": usuario_id,
@@ -119,7 +121,8 @@ def guardar_prediccion(usuario_id, nombre_est, datos_dict, prob, resultado, umbr
                 "datos_json": datos_json,
                 "prob": float(prob),  # Convertir a float de Python para SQLAlchemy
                 "res": resultado,
-                "umbral": float(umbral)  
+                "umbral": float(umbral),
+                "explicaciones_json": explicaciones_json
             })
             return True
     except Exception as e:

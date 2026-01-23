@@ -57,10 +57,11 @@ def predict(
         }
 
         # Ejecutar la predicción usando la función reutilizada de logic.py
-        # Esta función carga el modelo y devuelve la probabilidad de deserción
-        probabilidad = ejecutar_prediccion(datos)
-        if probabilidad is None:
+        # Esta función carga el modelo y devuelve la probabilidad de deserción y explicaciones
+        resultado_prediccion = ejecutar_prediccion(datos)
+        if resultado_prediccion[0] is None:
             raise HTTPException(status_code=400, detail="Error en la predicción. Verifica los campos ingresados.")
+        probabilidad, explicaciones = resultado_prediccion
 
         # Determinar el resultado basado en el umbral proporcionado por el usuario
         # Si la probabilidad > umbral, clasifica como "Desertor"; de lo contrario, "No Desertor"
@@ -68,11 +69,11 @@ def predict(
 
         # Guardar la predicción en la base de datos usando la función reutilizada de database.py
         # Asocia la predicción al usuario autenticado
-        if not guardar_prediccion(user['id'], request.nombre_estudiante, datos, probabilidad, resultado, request.umbral):
+        if not guardar_prediccion(user['id'], request.nombre_estudiante, datos, probabilidad, resultado, request.umbral, explicaciones):
             raise HTTPException(status_code=500, detail="Error al guardar la predicción en la base de datos.")
 
-        # Devolver la respuesta con la predicción y probabilidad
-        return PrediccionResponse(prediction=resultado, probability=probabilidad)
+        # Devolver la respuesta con la predicción, probabilidad y explicaciones
+        return PrediccionResponse(prediction=resultado, probability=probabilidad, explanations=explicaciones)
 
     except Exception as e:
         # Manejo de errores generales, devolviendo un error 500 con detalles
