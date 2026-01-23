@@ -3,9 +3,18 @@ from src.views.auth.auth import vista_login, vista_registro
 from src.views.layout.dashboard.dashboard import vista_dashboard
 
 # 1. Configuración de página (index.html de la app)
-st.set_page_config(page_title="EduGuard AI", page_icon="public/logo.png", layout="centered")
+st.set_page_config(
+    page_title="EduGuard AI",
+    page_icon="public/logo.png",
+    layout="wide",
+    initial_sidebar_state="collapsed"
+)
 
-# Cargar Font Awesome para iconos
+# 2. Cargar CSS global y Font Awesome para iconos
+with open('assets/css/dashboard.css', 'r', encoding='utf-8') as f:
+    css_content = f.read()
+    
+st.markdown(f'<style>{css_content}</style>', unsafe_allow_html=True)
 st.markdown('<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">', unsafe_allow_html=True)
 
 # 2. Inicializar el estado de la sesión
