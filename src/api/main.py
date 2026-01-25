@@ -20,7 +20,7 @@ app = FastAPI(
 # Sin CORS, el navegador bloquearía las requests por política de same-origin.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:8501"],  # Origen del frontend de Streamlit (ajusta si cambias el puerto)
+    allow_origins=["http://localhost:8501"],  # Origen del frontend de Streamlit (CAMBIAR A LA URL DE PRODUCCIÓN )
     allow_credentials=True,  # Permitir cookies/credenciales si se usan en el futuro
     allow_methods=["*"],  # Permitir todos los métodos HTTP (GET, POST, etc.)
     allow_headers=["*"],  # Permitir todos los headers

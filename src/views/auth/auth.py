@@ -1,5 +1,10 @@
 import streamlit as st
 import requests  # Para consumir la API
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+API_BASE_URL = os.getenv("URL_API_BACKEND", "http://localhost:8000")
 
 # Carga del estilo CSS 
 def local_css(estilo):
@@ -38,7 +43,7 @@ def vista_login():
             else:
                 try:
                     # Consumir la API para login
-                    response = requests.get("http://localhost:8000/users/me", auth=(email, password))
+                    response = requests.get(f"{API_BASE_URL}/users/me", auth=(email, password))
                     if response.status_code == 200:
                         user_data = response.json()
                         st.session_state.logged_in = True
@@ -50,7 +55,7 @@ def vista_login():
                         st.session_state.user_password = password  # Almacenar contraseña para llamadas API
                         st.rerun()
                     else:
-                        st.error("Credenciales incorrectas o error en la API.")
+                        st.error("Credenciales incorrectas. Intenta de nuevo.")
                 except requests.exceptions.RequestException as e:
                     st.error(f"Error conectando a la API: {e}")
         st.markdown('</div>', unsafe_allow_html=True)
@@ -105,10 +110,15 @@ def vista_registro():
                         "email": email,
                         "password": password
                     }
-                    response = requests.post("http://localhost:8000/users", json=payload)
-                    if response.status_code == 201:
-                        st.success("¡Cuenta creada con éxito! Ahora puedes ir al Login.")
-                        st.toast("Usuario registrado correctamente")
+                    response = requests.post(f"{API_BASE_URL}/users", json=payload)
+                    if response.status_code == 200:
+                        # Verificar si es respuesta de éxito
+                        response_data = response.json()
+                        if "message" in response_data and "Usuario creado" in response_data["message"]:
+                            st.success("¡Cuenta creada con éxito! Ahora puedes iniciar sesión.")
+                            st.toast("Usuario registrado correctamente")
+                        else:
+                            st.error(f"Respuesta inesperada: {response_data}")
                     else:
                         error_detail = response.json().get("detail", "Error desconocido")
                         st.error(f"Error en el registro: {error_detail}")

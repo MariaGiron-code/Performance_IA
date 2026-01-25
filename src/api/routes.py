@@ -80,7 +80,7 @@ def predict(
         raise HTTPException(status_code=500, detail=f"Error interno del servidor: {str(e)}")
 
 # Ruta para registrar nuevos usuarios
-@router.post("/users", response_model=UsuarioResponse)
+@router.post("/users")
 def create_user(request: UsuarioRequest, db: Session = Depends(get_db)):
     """
     Endpoint para crear un nuevo usuario.
@@ -89,11 +89,10 @@ def create_user(request: UsuarioRequest, db: Session = Depends(get_db)):
     try:
         # Intentar registrar al usuario usando la función reutilizada de database.py
         if registrar_usuario(request.username, request.email, request.password):
-            # Nota: registrar_usuario no devuelve el ID del usuario creado, por lo que no podemos devolver UsuarioResponse completo.
-            # En una implementación completa, se podría modificar para devolver el ID o hacer una consulta adicional.
-            raise HTTPException(status_code=201, detail="Usuario creado exitosamente.")
+            # Usuario creado exitosamente - devolver respuesta de éxito
+            return {"message": "Usuario creado exitosamente."}
         else:
-            raise HTTPException(status_code=400, detail="Error al crear el usuario. Posiblemente el email ya existe.")
+            raise HTTPException(detail="Error al crear el usuario. Posiblemente el email ya existe.")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error interno del servidor: {str(e)}")
 

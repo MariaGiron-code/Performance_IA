@@ -1,5 +1,10 @@
 import streamlit as st
 import requests  # Para consumir la API
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+API_BASE_URL = os.getenv("URL_API_BACKEND", "http://localhost:8000")
 
 def vista_nueva_prediccion():
     # Aplicar estilos CSS
@@ -205,7 +210,7 @@ def vista_nueva_prediccion():
                 # Hacer request a la API usando credenciales del usuario logueado
                 user_email = st.session_state.user_info["email"]
                 user_password = st.session_state.user_password
-                response = requests.post("http://localhost:8000/predict", json=payload, auth=(user_email, user_password))
+                response = requests.post(f"{API_BASE_URL}/predict", json=payload, auth=(user_email, user_password))
                 if response.status_code == 200:
                     result = response.json()
                     probabilidad = result["probability"]
