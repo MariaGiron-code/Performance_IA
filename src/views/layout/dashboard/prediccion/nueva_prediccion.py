@@ -215,7 +215,7 @@ def vista_nueva_prediccion():
                     result = response.json()
                     probabilidad = result["probability"]
                     resultado = result["prediction"]
-                    explicaciones = result["explanations"]
+                    explicaciones = result.get("explanations", {})
                 else:
                     st.error(f"Error en la API: {response.status_code} - {response.text}")
                     return
@@ -243,17 +243,28 @@ def vista_nueva_prediccion():
                 ))
                 st.plotly_chart(fig)
 
-                # Sección de explicaciones
-                st.subheader("Razones de la Predicción")
-                st.info("Las siguientes variables influyeron más en la clasificación del estudiante. Valores positivos aumentan la probabilidad de deserción, negativos la disminuyen.")
+                # Gráfico de barras de las variables más influyentes
+                st.subheader("Variables que más influyen en la predicción")
+                sorted_explicaciones = sorted(explicaciones.items(), key=lambda x: abs(x[1]), reverse=True)[:5]  # Top 5
 
-                # Ordenar por importancia absoluta
-                sorted_explicaciones = sorted(explicaciones.items(), key=lambda x: abs(x[1]), reverse=True)
+                if sorted_explicaciones:
+                    vars_names = [var for var, _ in sorted_explicaciones]
+                    vars_values = [val for _, val in sorted_explicaciones]
 
-                # Mostrar top 10
-                for var, contrib in sorted_explicaciones[:10]:
-                    color = "red" if contrib > 0 else "green"
-                    st.markdown(f"- **{var}**: {contrib:.4f} ({'aumenta riesgo' if contrib > 0 else 'disminuye riesgo'})", unsafe_allow_html=True)
+                    fig = go.Figure(go.Bar(
+                        x=vars_values,
+                        y=vars_names,
+                        orientation='h',
+                        marker_color=['red' if v > 0 else 'green' for v in vars_values]
+                    ))
+                    fig.update_layout(
+                        xaxis_title="Contribución al riesgo",
+                        yaxis_title="Variable",
+                        height=300
+                    )
+                    st.plotly_chart(fig)
+                else:
+                    st.write("No se pudieron calcular las explicaciones detalladas.")
             else:
                 st.error("Error en la predicción. Verifica los datos.")
     

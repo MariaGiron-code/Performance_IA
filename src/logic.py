@@ -8,6 +8,36 @@ import joblib
 import pandas as pd
 import shap
 
+# Mapeo de nombres técnicos a nombres amigables para el usuario
+nombres_amigables = {
+    'Modo_solicitud': 'Modo de solicitud',
+    'Orden_solicitud': 'Orden de solicitud',
+    'Carrera': 'Carrera',
+    'Asistencia_diurna_nocturna': 'Asistencia diurna/nocturna',
+    'Calificacion_previa': 'Calificación previa',
+    'Calificacion_madre': 'Calificación madre',
+    'Calificacion_padre': 'Calificación padre',
+    'Ocupacion_madre': 'Ocupación madre',
+    'Ocupacion_padre': 'Ocupación padre',
+    'Desplazado': 'Desplazado',
+    'Deudor': 'Deudor',
+    'Pagos_al_dia': 'Pagos al día',
+    'Genero': 'Género',
+    'Becado': 'Becado',
+    'Edad_al_matricularse': 'Edad al matricularse',
+    'Unidades_1er_sem_matriculadas': 'Créditos matriculados 1er sem',
+    'Unidades_1er_sem_evaluaciones': 'Créditos evaluados 1er sem',
+    'Unidades_1er_sem_aprobadas': 'Créditos aprobados 1er sem',
+    'Unidades_1er_sem_nota': 'Nota promedio 1er sem',
+    'Unidades_2do_sem_matriculadas': 'Créditos matriculados 2do sem',
+    'Unidades_2do_sem_evaluaciones': 'Créditos evaluados 2do sem',
+    'Unidades_2do_sem_aprobadas': 'Créditos aprobados 2do sem',
+    'Unidades_2do_sem_nota': 'Nota promedio 2do sem',
+    'Tasa_desempleo': 'Tasa de desempleo',
+    'Tasa_inflacion': 'Tasa de inflación',
+    'PIB': 'PIB'
+}
+
 def ejecutar_prediccion(datos_dict):
     """
     datos_dict: Diccionario con las 26 variables necesarias para la predicción
@@ -41,16 +71,19 @@ def ejecutar_prediccion(datos_dict):
             explainer = shap.TreeExplainer(modelo)
             shap_values = explainer.shap_values(df_input)
             # shap_values[1] para clase positiva (Desertor)
-            explicaciones = dict(zip(columnas, shap_values[1][0]))
+            explicaciones_raw = dict(zip(columnas, shap_values[1][0]))
         except Exception as shap_error:
             print(f"Error calculando SHAP: {shap_error}. Usando explicaciones alternativas.")
             # Fallback: usar feature_importances_ si disponible, sino dict vacío
             if hasattr(modelo, 'feature_importances_'):
-                explicaciones = dict(zip(columnas, modelo.feature_importances_))
+                explicaciones_raw = dict(zip(columnas, modelo.feature_importances_))
             else:
-                explicaciones = {}
+                explicaciones_raw = {}
 
-        return probabilidad, explicaciones
+        # Crear explicaciones amigables
+        explicaciones_amigables = {nombres_amigables.get(k, k): v for k, v in explicaciones_raw.items()}
+
+        return probabilidad, explicaciones_amigables
     except Exception as e:
         print(f"Error en la predicción: {e}")
-        return None, None
+        return None, {}

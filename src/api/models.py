@@ -1,6 +1,6 @@
 # Definición del modelo de datos para la aplicación
 from pydantic import BaseModel # Importar BaseModel para definir modelos de datos
-from typing import Dict, Any # Importar Any para tipos de datos flexibles y Dict para diccionarios
+from typing import Dict, Any, Optional # Importar Any para tipos de datos flexibles y Dict para diccionarios
 
 class PrediccionRequest(BaseModel):
     nombre_estudiante: str
@@ -35,7 +35,7 @@ class PrediccionRequest(BaseModel):
 class PrediccionResponse(BaseModel):
     prediction: str  # "Desertor" or "No Desertor"
     probability: float
-    explanations: Dict[str, float]  # Diccionario de variable: contribución SHAP
+    explanations: Dict[str, float]  # Diccionario de variable amigable: contribución SHAP
 
 class UsuarioRequest(BaseModel):
     username: str
