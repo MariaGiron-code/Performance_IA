@@ -20,7 +20,7 @@ def vista_dashboard():
     
     opcion = st.sidebar.radio(
         "Menú de opciones",
-        ["Panel de Monitoreo","Nueva Predicción", "Métricas del modelo", "Cambiar Contraseña"],
+        ["Panel de Monitoreo","Nueva Predicción", "Métricas del modelo","Perfil","Cambiar Contraseña"],
         key="nav_dashboard"
     )
     
