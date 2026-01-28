@@ -8,7 +8,7 @@ from src.views.layout.dashboard.dashboard import vista_dashboard
 
 def setup_assets():
     # Carga la ruta CSS mediante la librería para evitar conflictos con diferentes SO.
-    css_path = Path("assets/css/dashboard.css")
+    css_path = Path("public/css/dashboard.css")
 
     if css_path.exists():
         with open(css_path, encoding="utf-8") as f:
