@@ -1,10 +1,14 @@
-#  configuración para Render que especifica el tipo de servicio, comandos de build y start.
 services:
   - type: web
     name: eduguard-api
-    env: python
-    buildCommand: pip install -r requirements.txt
-    startCommand: python run_api.py
+    runtime: python
+
+    # Se instala - actualiza las dependencias necesarias.
+    buildCommand: pip install --upgrade pip && pip install -r requirements.txt
+
+    # Comando para el arranque de la app.
+    startCommand: python main.py
+
     envVars:
-      - key: PORT
-        value: 10000  # Render asignará dinámicamente, pero podemos especificar default
+      - key: PYTHON_VERSION
+        value: 3.14.0 # VERSIÓN ESPECÍFICA DE PYTHON
