@@ -1,9 +1,8 @@
 from typing import Annotated, Dict
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
 
-from src.api.dependencies import get_current_user, get_db
+from src.api.dependencies import get_current_user
 # Importaciones internas del proyecto
 from src.api.models import (
     PrediccionRequest,
@@ -22,18 +21,16 @@ from src.logic import ejecutar_prediccion
 router = APIRouter()
 
 
-# Rutas de Predicción
+# --- Rutas de Predicción ---
 @router.post(
     "/predict",
     response_model=PrediccionResponse,
     tags=["Predicciones"],
     summary="Evaluar riesgo de deserción",
 )
-# Procesamiento de los datos para la predicción y registro de los resultados
 def predict(
         request: PrediccionRequest,
         current_user: Annotated[Dict, Depends(get_current_user)],
-        db: Annotated[Session, Depends(get_db)],
 ):
     try:
         # 1. Extracción de Datos
@@ -50,15 +47,15 @@ def predict(
 
         probabilidad, explicaciones = resultado_prediccion
 
-        # 3. Determina la etiqueta final basada en el umbral dinámico del usuario.
+        # 3. Determina la etiqueta final
         etiqueta = "Desertor" if probabilidad > request.umbral else "No Desertor"
 
-        # 4. Guarda el historial de la predicción vinculado al usuario actual.
+        # 4. Guarda el historial vinculado al usuario actual
         guardado_exitoso = guardar_prediccion(
-            user_id=current_user["id"],
-            nombre_estudiante=request.nombre_estudiante,
-            datos_entrada=features_data,
-            probabilidad=probabilidad,
+            usuario_id=current_user["id"],
+            nombre_est=request.nombre_estudiante,
+            datos_dict=features_data,
+            prob=probabilidad,
             resultado=etiqueta,
             umbral=request.umbral,
             explicaciones=explicaciones,
@@ -83,15 +80,14 @@ def predict(
         )
 
 
-# Rutas de Usuarios
+# --- Rutas de Usuarios ---
 @router.post(
     "/users",
     status_code=status.HTTP_201_CREATED,
     tags=["Usuarios"],
     summary="Registrar nuevo usuario",
 )
-# Creación de un nuevo usuario
-def create_user(request: UsuarioRequest, db: Annotated[Session, Depends(get_db)]):
+def create_user(request: UsuarioRequest):
     try:
         exito = registrar_usuario(request.username, request.email, request.password)
 
@@ -113,16 +109,16 @@ def create_user(request: UsuarioRequest, db: Annotated[Session, Depends(get_db)]
     tags=["Usuarios"],
     summary="Perfil del usuario actual",
 )
-# Retorna los datos del usuario autenticado
 def get_user(current_user: Annotated[Dict, Depends(get_current_user)]):
     return current_user
 
 
-# Rutas de Monitoreo
+# --- Rutas de Monitoreo ---
 @router.get(
     "/monitoreo/stats", tags=["Monitoreo"], summary="Métricas globales del sistema"
 )
-def get_monitoreo_stats(current_user: Annotated[Dict, Depends(get_current_user)]):
+# Obtiene la info del usuario logueado
+def get_monitoreo_stats(_: Annotated[Dict, Depends(get_current_user)]):
     stats = obtener_estadisticas_monitoreo()
 
     if stats is None:

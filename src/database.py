@@ -1,171 +1,227 @@
+import json
+import logging
 import os
-from sqlalchemy import create_engine, text
-from dotenv import load_dotenv
+from typing import Any, Dict, Optional
+
 import bcrypt
-import json 
+from dotenv import load_dotenv
+from sqlalchemy import create_engine, text
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
-load_dotenv() 
+# --- Configuración Global ---
 
-# usamos la URL de la base de datos
+load_dotenv()
+
+# Configura el sistema de logs para evitar el uso de 'print' en producción.
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Verifica la variable de entorno crítica.
 DATABASE_URL = os.getenv("DB_URL")
+if not DATABASE_URL:
+    raise ValueError("❌ Error: La variable DB_URL no está definida en el entorno.")
 
-# Creamos el motor de SQLAlchemy
-engine = create_engine(DATABASE_URL)
+# Crea el motor de conexión con pooling activado para eficiencia.
+engine = create_engine(DATABASE_URL, pool_pre_ping=True)
 
-# FUNCIONES DEL SISTEMA
 
-def registrar_usuario(nombre, email, password):
-    ## 1. Crear el 'hash' de la contraseña
-    # Transformamos la contraseña en una cadena de caracteres irreconocible
-    bytes_password = password.encode('utf-8')
-    salida = bcrypt.gensalt()
-    hash_password = bcrypt.hashpw(bytes_password, salida).decode('utf-8')
+# --- Gestión de Usuarios (Auth) ---
+
+
+def registrar_usuario(nombre: str, email: str, password: str) -> bool:
+    """
+    Crea un nuevo usuario en la base de datos con contraseña hasheada.
+    Retorna False si el email ya existe (IntegrityError).
+    """
+    # Genera un hash seguro utilizando bcrypt (estándar de la industria).
+    bytes_password = password.encode("utf-8")
+    salt = bcrypt.gensalt()
+    hash_password = bcrypt.hashpw(bytes_password, salt).decode("utf-8")
 
     query = text("""
-            INSERT INTO usuarios (nombre, email, password_hash)
-            VALUES (:nombre, :email, :password_hash)
-    """)
+                 INSERT INTO usuarios (nombre, email, password_hash)
+                 VALUES (:nombre, :email, :password_hash)
+                 """)
 
     try:
+        # Usa 'engine.begin' para manejar la transacción automáticamente (commit/rollback).
         with engine.begin() as conn:
-            conn.execute(query, {
-                "nombre": nombre,
-                "email": email,
-                "password_hash": hash_password
-            })
+            conn.execute(
+                query,
+                {"nombre": nombre, "email": email, "password_hash": hash_password},
+            )
+            logger.info(f"Usuario registrado exitosamente: {email}")
             return True
 
-    except Exception as e: 
-        print(f"Error en el registro del usuario: {e}")
+    except IntegrityError:
+        logger.warning(f"Intento de registro duplicado para: {email}")
+        return False
+    except SQLAlchemyError as e:
+        logger.error(f"Error de base de datos al registrar usuario: {e}")
         return False
 
 
-def login(email, password):
-    query = text("SELECT id, nombre, email, password_hash from usuarios where email = :email ")
+def login(email: str, password: str) -> Optional[Dict[str, Any]]:
+    """
+    Verifica las credenciales del usuario.
+    Retorna un diccionario con los datos del usuario si es exitoso, o None si falla.
+    """
+    query = text(
+        "SELECT id, nombre, email, password_hash FROM usuarios WHERE email = :email"
+    )
 
     try:
         with engine.connect() as conn:
             result = conn.execute(query, {"email": email}).fetchone()
 
-            if result:
-                user_id, nombre, user_email, hash_almacenado = result
-                # Convertir el hash string a bytes para la verificación
-                hash_bytes = hash_almacenado.encode('utf-8') if isinstance(hash_almacenado, str) else hash_almacenado
+            if not result:
+                return None  # Usuario no encontrado
 
-                if bcrypt.checkpw(password.encode('utf-8'), hash_bytes):
-                    return {"id": user_id, "nombre": nombre, "email": user_email}  # Login exitoso
+            # Desempaqueta la tupla de resultados.
+            user_id, nombre, user_email, hash_almacenado = result
 
-                return None  # Contraseña incorrecta
+            # Convierte el hash a bytes si es necesario para bcrypt.
+            hash_bytes = (
+                hash_almacenado.encode("utf-8")
+                if isinstance(hash_almacenado, str)
+                else hash_almacenado
+            )
 
-            return None  # Email no encontrado
+            # Compara la contraseña plana con el hash almacenado.
+            if bcrypt.checkpw(password.encode("utf-8"), hash_bytes):
+                return {"id": user_id, "nombre": nombre, "email": user_email}
 
-    except Exception as e:
-        print(f"Error al iniciar sesión: {e}")
+            return None  # Contraseña incorrecta
+
+    except SQLAlchemyError as e:
+        logger.error(f"Error crítico en login: {e}")
         return None
 
-def cambiar_contraseña(email, contraseña_actual, nueva_contraseña):
-    """Cambia la contraseña del usuario verificando la actual."""
-    # Primero, obtener el hash actual
+
+def cambiar_contraseña(
+        email: str, contraseña_actual: str, nueva_contraseña: str
+) -> bool:
+    """
+    Actualiza la contraseña del usuario previa validación de la actual.
+    """
     query_select = text("SELECT password_hash FROM usuarios WHERE email = :email")
+    query_update = text(
+        "UPDATE usuarios SET password_hash = :nuevo_hash WHERE email = :email"
+    )
 
     try:
-        with engine.connect() as conn:
+        with engine.begin() as conn:
+            # 1. Verificación
             result = conn.execute(query_select, {"email": email}).fetchone()
+            if not result:
+                return False
 
-            if result:
-                hash_almacenado = result[0]
-                # Verificar la contraseña actual
-                if bcrypt.checkpw(contraseña_actual.encode('utf-8'), hash_almacenado.encode('utf-8')):
-                    # Hashear la nueva contraseña
-                    bytes_nueva = nueva_contraseña.encode('utf-8')
-                    salida = bcrypt.gensalt()
-                    nuevo_hash = bcrypt.hashpw(bytes_nueva, salida).decode('utf-8')
+            hash_almacenado = result[0]
+            if isinstance(hash_almacenado, str):
+                hash_almacenado = hash_almacenado.encode("utf-8")
 
-                    # Actualizar en la base de datos
-                    query_update = text("UPDATE usuarios SET password_hash = :nuevo_hash WHERE email = :email")
-                    with engine.begin() as conn_update:
-                        conn_update.execute(query_update, {"nuevo_hash": nuevo_hash, "email": email})
-                    return True  # Cambio exitoso
-                else:
-                    return False  # Contraseña actual incorrecta
-            else:
-                return False  # Usuario no encontrado
+            if not bcrypt.checkpw(contraseña_actual.encode("utf-8"), hash_almacenado):
+                return False
 
-    except Exception as e:
-        print(f"Error al cambiar contraseña: {e}")
+            # 2. Actualización
+            bytes_nueva = nueva_contraseña.encode("utf-8")
+            nuevo_hash = bcrypt.hashpw(bytes_nueva, bcrypt.gensalt()).decode("utf-8")
+
+            conn.execute(query_update, {"nuevo_hash": nuevo_hash, "email": email})
+            logger.info(f"Contraseña actualizada para: {email}")
+            return True
+
+    except SQLAlchemyError as e:
+        logger.error(f"Error al cambiar contraseña: {e}")
         return False
 
 
-# Guardar historial de predicciones
-def guardar_prediccion(usuario_id, nombre_est, datos_dict, prob, resultado, umbral, explicaciones):
+# --- Historial y Analítica ---
+
+
+def guardar_prediccion(
+        usuario_id: int,
+        nombre_est: str,
+        datos_dict: Dict,
+        prob: float,
+        resultado: str,
+        umbral: float,
+        explicaciones: Dict,
+) -> bool:
     """
-    Guarda la predicción en la Base de datos.
-    'datos_dict' contiene las 26 variables enviadas al modelo.
-    'explicaciones' es un diccionario con las contribuciones SHAP.
+    Persiste el resultado de la inferencia y los datos de entrada (JSONB) para auditoría.
     """
     query = text("""
-        INSERT INTO historial_predicciones
-        (usuario_id, nombre_estudiante, datos_entrada, probabilidad, resultado_ia, umbral_usado, explicaciones)
-        VALUES (:usuario_id, :nombre_est, :datos_json, :prob, :res, :umbral, :explicaciones_json)
-    """)
+                 INSERT INTO historial_predicciones
+                 (usuario_id, nombre_estudiante, datos_entrada, probabilidad, resultado_ia, umbral_usado, explicaciones)
+                 VALUES (:uid, :nombre, :datos, :prob, :res, :umbral, :expl)
+                 """)
 
     try:
-        # Convertimos el diccionario de Python a una cadena JSON para Postgres
-        datos_json = json.dumps(datos_dict)
-        explicaciones_json = json.dumps(explicaciones)
-
         with engine.begin() as conn:
-            conn.execute(query, {
-                "usuario_id": usuario_id,
-                "nombre_est": nombre_est,
-                "datos_json": datos_json,
-                "prob": float(prob),  # Convertir a float de Python para SQLAlchemy
-                "res": resultado,
-                "umbral": float(umbral),
-                "explicaciones_json": explicaciones_json
-            })
+            conn.execute(
+                query,
+                {
+                    "uid": usuario_id,
+                    "nombre": nombre_est,
+                    # SQLAlchemy maneja JSON nativamente en dialectos modernos,
+                    # pero json.dumps asegura compatibilidad con tipos TEXT o JSON genéricos.
+                    "datos": json.dumps(datos_dict),
+                    "prob": float(prob),
+                    "res": resultado,
+                    "umbral": float(umbral),
+                    "expl": json.dumps(explicaciones),
+                },
+            )
             return True
-    except Exception as e:
-        print(f"Error al guardar historial: {e}")
+    except SQLAlchemyError as e:
+        logger.error(f"Error guardando predicción: {e}")
         return False
-    
 
-def obtener_estadisticas_monitoreo():
+
+def obtener_estadisticas_monitoreo() -> Optional[Dict[str, Any]]:
     """
-    Consulta la BD para obtener métricas generales y el historial reciente.
+    Calcula métricas globales y recupera el historial reciente.
+    Optimización: Realiza agregaciones en SQL para reducir latencia de red.
     """
+    # Consulta optimizada: Calcula total y riesgo en una sola pasada.
+    query_agregada = text("""
+                          SELECT COUNT(*)                                                   as total,
+                                 SUM(CASE WHEN resultado_ia = 'Desertor' THEN 1 ELSE 0 END) as total_riesgo
+                          FROM historial_predicciones
+                          """)
+
+    query_historial = text("""
+                           SELECT nombre_estudiante, resultado_ia, probabilidad
+                           FROM historial_predicciones
+                           ORDER BY fecha_prediccion DESC LIMIT 10
+                           """)
+
     try:
         with engine.connect() as conn:
-            # 1. Totales
-            total = conn.execute(text("SELECT COUNT(*) FROM historial_predicciones")).scalar()
-            
-            # 2. Conteo por resultado (Desertor vs No Desertor)
-            query_riesgo = text("SELECT COUNT(*) FROM historial_predicciones WHERE resultado_ia = 'Desertor'")
-            riesgo = conn.execute(query_riesgo).scalar()
-            
-            # 3. Historial reciente (últimos 10)
-            query_historial = text("""
-                SELECT nombre_estudiante, resultado_ia, probabilidad
-                FROM historial_predicciones 
-                ORDER BY probabilidad DESC LIMIT 10
-            """)
+            # 1. Obtener métricas agregadas
+            metrics = conn.execute(query_agregada).fetchone()
+            total = metrics[0] or 0
+            riesgo = metrics[1] or 0
+
+            # 2. Obtener historial reciente
             historial_raw = conn.execute(query_historial).fetchall()
-            
-            # Formatear historial para JSON
-            historial = []
-            for fila in historial_raw:
-                historial.append({
-                    "nombre": fila[0],
-                    "resultado": fila[1],
-                    "probabilidad": float(fila[2])
-                })
+
+            # Formatear respuesta
+            historial = [
+                {"nombre": row[0], "resultado": row[1], "probabilidad": float(row[2])}
+                for row in historial_raw
+            ]
+
+            tasa = (riesgo / total * 100) if total > 0 else 0
 
             return {
                 "total_evaluados": total,
                 "total_riesgo": riesgo,
-                "tasa_riesgo": (riesgo / total * 100) if total > 0 else 0,
-                "historial": historial
+                "tasa_riesgo": round(tasa, 2),
+                "historial": historial,
             }
-    except Exception as e:
-        print(f"Error obteniendo estadísticas: {e}")
+
+    except SQLAlchemyError as e:
+        logger.error(f"Error obteniendo estadísticas: {e}")
         return None

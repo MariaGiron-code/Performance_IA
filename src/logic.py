@@ -119,9 +119,6 @@ def ejecutar_prediccion(datos_dict: Dict) -> Tuple[Optional[float], Dict[str, fl
         # 3. Inferencia (Predicción)
         probabilidad = modelo.predict_proba(df_input)[0][1]
 
-        # 4. Explicabilidad
-        explicaciones_raw = {}
-
         if explainer:
             try:
                 # Calcula los valores SHAP que corresponden a la clase positiva (Desertor).
