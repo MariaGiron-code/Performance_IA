@@ -1,44 +1,65 @@
+from pathlib import Path
+
 import streamlit as st
 
+# Gestión de Rutas Absolutas
+BASE_DIR = Path(__file__).parent.parent.parent.parent.parent
+CSS_PATH = BASE_DIR / "public" / "css" / "dashboard.css"
+LOGO_PATH = BASE_DIR / "public" / "logo.png"
 
-# Carga del estilo CSS para el dashboard
-def local_css(estilo):
-    with open(estilo) as f:
-        st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+
+def local_css(file_path):
+    try:
+        with open(file_path) as f:
+            st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+    except FileNotFoundError:
+        print(f"Advertencia: No se encontró {file_path}")
 
 
 def vista_dashboard():
-    # Cargar CSS del dashboard
-    local_css("assets/css/dashboard.css")
+    local_css(CSS_PATH)  # Se carga el CSS
 
-    # --- VISTA PARA USUARIOS LOGUEADOS (Panel de Control) Dashboard principal ---
+    # --- SIDEBAR (Menú Lateral) ---
+    with st.sidebar:
+        # 1. Logo con manejo de errores
+        if LOGO_PATH.exists():
+            st.image(str(LOGO_PATH), width=100)
+        else:
+            st.markdown("### 🎓 **EduGuard AI**")
 
-    try:
-        st.sidebar.image("public/logo.png", width=100)
-    except:
-        st.sidebar.write("🎓 **EduGuard AI**")
+        # 2. Saludo seguro
+        nombre_usuario = st.session_state.get("user_info", {}).get("nombre", "Usuario")
+        st.write(f"Bienvenido, **{nombre_usuario}**")
 
-    st.sidebar.write(f"Bienvenido, **{st.session_state.user_info['nombre']}**")
+        # 3. Menú de navegación
+        opcion = st.radio(
+            "Menú de opciones",
+            [
+                "Panel de Monitoreo",
+                "Nueva Predicción",
+                "Métricas del modelo",
+                "Perfil",
+                "Cambiar Contraseña",
+            ],
+            key="nav_dashboard",
+        )
 
-    opcion = st.sidebar.radio(
-        "Menú de opciones",
-        [
-            "Panel de Monitoreo",
-            "Nueva Predicción",
-            "Métricas del modelo",
-            "Perfil",
-            "Cambiar Contraseña",
-        ],
-        key="nav_dashboard",
-    )
+        st.markdown("---")
 
-    st.sidebar.markdown("---")
-    if st.sidebar.button("Cerrar Sesión", key="btn_cerrar_sesion"):
-        st.session_state.logged_in = False
-        st.session_state.auth_mode = "login"  # Resetear para el siguiente inicio
-        st.rerun()
+        # 4. Botón de Logout
+        if st.button(
+                "Cerrar Sesión", key="btn_cerrar_sesion", use_container_width=True
+        ):
+            # Limpiar variables críticas
+            keys_to_clear = ["logged_in", "user_info", "user_password"]
+            for key in keys_to_clear:
+                if key in st.session_state:
+                    del st.session_state[key]
 
-    # Secciones del sistema según la opción seleccionada
+            st.session_state.auth_mode = "login"
+            st.rerun()
+
+    # ROUTER (Carga de Vistas)
     if opcion == "Panel de Monitoreo":
         from panel_monitoreo.panel_monitoreo import vista_panel_monitoreo
 
@@ -53,6 +74,10 @@ def vista_dashboard():
         from metricas.metricas_modelo import vista_metricas_modelo
 
         vista_metricas_modelo()
+
+    elif opcion == "Perfil":
+        st.title("Perfil de Usuario")
+        st.info("Esta funcionalidad estará disponible próximamente.")
 
     elif opcion == "Cambiar Contraseña":
         from cambiar_contraseña.cambiar_contraseña import vista_cambiar_contraseña
