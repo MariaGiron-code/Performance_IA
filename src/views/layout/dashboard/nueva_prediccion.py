@@ -1,19 +1,25 @@
-import streamlit as st
-import requests  # Para consumir la API
 import os
+
+import plotly.graph_objects as go
+import requests
+import streamlit as st
 from dotenv import load_dotenv
+
+from src.database import guardar_prediccion
 
 load_dotenv()
 API_BASE_URL = os.getenv("URL_API_BACKEND", "http://localhost:8000")
 
-def vista_nueva_prediccion():
-    # Aplicar estilos CSS
-    st.markdown('<div class="nueva-prediccion">', unsafe_allow_html=True)
-    
-    st.write("## Nueva Predicción de Riesgo Académico")
-    st.info("Ingresa los datos del estudiante para calcular la probabilidad de deserción.")
 
-    # Diccionarios de mapeo para categorías (simplificados para claridad)
+def vista_nueva_prediccion():
+    st.markdown('<div class="nueva-prediccion">', unsafe_allow_html=True)
+
+    col_header, col_logo = st.columns([5, 1])
+    with col_header:
+        st.write("## Nueva Predicción")
+        st.info("Ingresa los datos del estudiante para calcular su riesgo académico.")
+
+    # DICCIONARIOS DE MAPEO
     modo_solicitud_map = {
         "Primera opción": 1,
         "Segunda opción": 2,
@@ -23,7 +29,7 @@ def vista_nueva_prediccion():
         "Sexta opción": 6,
         "Séptima opción": 7,
         "Otra": 8,
-        "Transferencia": 9
+        "Transferencia": 9,
     }
     carrera_map = {
         "Tecnologías de Producción de Biocombustibles": 1,
@@ -42,7 +48,7 @@ def vista_nueva_prediccion():
         "Informática de Gestión": 14,
         "Ingeniería Civil": 15,
         "Turismo (Diurno)": 16,
-        "Otra": 17
+        "Otra": 17,
     }
     ocupacion_map = {
         "Estudiante": 1,
@@ -53,7 +59,7 @@ def vista_nueva_prediccion():
         "Trabajador independiente": 6,
         "Trabajador del hogar": 7,
         "Otra": 8,
-        "Desconocido": 9
+        "Desconocido": 9,
     }
     calificacion_map = {
         "Secundaria": 1,
@@ -61,211 +67,284 @@ def vista_nueva_prediccion():
         "Licenciatura": 3,
         "Maestría": 4,
         "Doctorado": 5,
-        "Otra": 6
+        "Otra": 6,
     }
 
+    #  FORMULARIO
     with st.form("form_prediccion"):
-        
-        # Campo para ingresar el nombre del estudiante, requerido para el historial
-        nombre_estudiante = st.text_input("Nombre del estudiante", help="Ingresa el nombre del estudiante para registrar la predicción")
-        
-        # Descripción detallada del ajuste del umbral
-        
-        st.write("### Ajuste del Umbral de Riesgo")
-        st.info("""
-        El umbral de deserción determina a partir de qué probabilidad el sistema clasifica a un estudiante como 'Desertor' o 'No Desertor'. 
-        - **Umbral bajo (ej. 0.3)**: Clasifica más estudiantes como 'Desertor', lo que aumenta la detección de riesgos potenciales, pero puede generar más alertas falsas (falsos positivos), es decir, estudiantes que no desertarán pero son marcados como de riesgo.
-        - **Umbral alto (ej. 0.7)**: Clasifica menos estudiantes como 'Desertor', siendo más conservador, lo que reduce las alertas falsas pero puede pasar por alto riesgos reales (falsos negativos).
-        Ajusta este valor según tu tolerancia al riesgo: si prefieres identificar más estudiantes en riesgo (aunque algunos no lo estén), baja el umbral; si quieres ser más preciso, súbelo.
-        """)
-        
-        # Slider para ajustar el umbral de clasificación de deserción
-        umbral = st.slider("Umbral de riesgo de deserción", min_value=0.0, max_value=1.0, value=0.5, step=0.01, help="Ajusta el umbral de probabilidad para clasificar como 'Desertor'. Valores bajos detectan más riesgos, altos son más conservadores.")
-        st.markdown('</div>', unsafe_allow_html=True)
-        
-        tab1, tab2, tab3 = st.tabs(["Socio-demográfica", "Académica", "Entorno"])
-        
+
+        # Datos Clave
+        c1, c2 = st.columns([2, 1])
+        with c1:
+            nombre_estudiante = st.text_input(
+                "Nombre del estudiante", placeholder="Ej. Ana García"
+            )
+        with c2:
+            umbral = st.slider(
+                "Sensibilidad del Modelo",
+                0.0,
+                1.0,
+                0.5,
+                0.05,
+                help="A mayor valor, el sistema es menos alarmista. A menor valor, detecta más riesgo.",
+            )
+
+        # Pestañas de Datos
+        tab1, tab2, tab3 = st.tabs(
+            ["👤 Socio-demográfica", "🎓 Académica", "🌍 Entorno"]
+        )
+
         with tab1:
-            st.subheader("Datos Socio-demográficos")
-            modo_solicitud_sel = st.selectbox("Modo de solicitud", list(modo_solicitud_map.keys()), help="Indica cómo el estudiante aplicó a la universidad (primera fase general, decreto específico, etc.)")
-            orden_solicitud = st.number_input("Orden de solicitud", min_value=0, value=1, help="Orden de prioridad en las aplicaciones del estudiante (1=primera, 2=segunda, etc.)")
-            carrera_sel = st.selectbox("Carrera", list(carrera_map.keys()), help="Carrera universitaria a la que aplicó el estudiante")
-            asistencia_diurna_nocturna = st.selectbox("Asistencia diurna/nocturna", ["Diurna", "Nocturna"], help="Si el estudiante asiste a clases diurnas o nocturnas")
-            calificacion_previa_sel = st.selectbox("Calificación previa", list(calificacion_map.keys()), help="Nivel educativo más alto alcanzado antes de matricularse")
-            calificacion_madre_sel = st.selectbox("Calificación madre", list(calificacion_map.keys()), help="Nivel educativo de la madre del estudiante")
-            calificacion_padre_sel = st.selectbox("Calificación padre", list(calificacion_map.keys()), help="Nivel educativo del padre del estudiante")
-            ocupacion_madre_sel = st.selectbox("Ocupación madre", list(ocupacion_map.keys()), help="Ocupación laboral de la madre del estudiante")
-            ocupacion_padre_sel = st.selectbox("Ocupación padre", list(ocupacion_map.keys()), help="Ocupación laboral del padre del estudiante")
-            desplazado = st.selectbox("Desplazado", ["Sí", "No"], help="Si el estudiante vive lejos de su hogar familiar")
-            deudor = st.selectbox("Deudor", ["Sí", "No"], help="Si el estudiante tiene deudas pendientes")
-            pagos_al_dia = st.selectbox("Pagos al día", ["Sí", "No"], help="Si el estudiante paga sus cuotas puntualmente")
-            genero = st.selectbox("Género", ["Masculino", "Femenino"], help="Género del estudiante")
-            becado = st.selectbox("Becado", ["Sí", "No"], help="Si el estudiante recibe beca financiera")
-            edad_al_matricularse = st.number_input("Edad al matricularse", min_value=15, max_value=100, value=18, help="Edad del estudiante al momento de matricularse")
-        
+            c_soc1, c_soc2 = st.columns(2)
+            with c_soc1:
+                modo_solicitud_sel = st.selectbox(
+                    "Modo solicitud", list(modo_solicitud_map.keys())
+                )
+                orden_solicitud = st.number_input("Orden solicitud", 1, 10, 1)
+                carrera_sel = st.selectbox("Carrera", list(carrera_map.keys()))
+                genero = st.selectbox("Género", ["Masculino", "Femenino"])
+                edad_al_matricularse = st.number_input(
+                    "Edad al matricularse", 15, 80, 18
+                )
+                desplazado = st.selectbox(
+                    "¿Es desplazado?", ["No", "Sí"]
+                )  # Ajustado orden lógico
+
+            with c_soc2:
+                calificacion_previa_sel = st.selectbox(
+                    "Estudios previos", list(calificacion_map.keys())
+                )
+                calificacion_madre_sel = st.selectbox(
+                    "Nivel estudios Madre", list(calificacion_map.keys())
+                )
+                ocupacion_madre_sel = st.selectbox(
+                    "Ocupación Madre", list(ocupacion_map.keys())
+                )
+                calificacion_padre_sel = st.selectbox(
+                    "Nivel estudios Padre", list(calificacion_map.keys())
+                )
+                ocupacion_padre_sel = st.selectbox(
+                    "Ocupación Padre", list(ocupacion_map.keys())
+                )
+                becado = st.selectbox("¿Tiene Beca?", ["No", "Sí"])
+                deudor = st.selectbox("¿Tiene Deudas?", ["No", "Sí"])
+                pagos_al_dia = st.selectbox("¿Pagos al día?", ["Sí", "No"])
+                asistencia_diurna_nocturna = st.selectbox(
+                    "Horario", ["Diurna", "Nocturna"]
+                )
+
         with tab2:
-            st.subheader("Datos Académicos")
-            unidades_1er_sem_matriculadas = st.number_input("Número de créditos matriculados en 1er Semestre", min_value=0, value=6, help="Número de unidades curriculares inscritas al inicio del primer semestre")
-            unidades_1er_sem_evaluaciones = st.number_input("Número de créditos evaluados en 1er Semestre", min_value=0, value=6, help="Número de unidades que fueron evaluadas (examinadas o calificadas) en el primer semestre")
-            unidades_1er_sem_aprobadas = st.number_input("Número de créditos aprobados en 1er Semestre", min_value=0, value=6, help="Número de unidades que el estudiante aprobó (pasó) en el primer semestre")
-            unidades_1er_sem_nota = st.number_input("Nota promedio en 1er Semestre", min_value=0.0, max_value=20.0, value=12.0, help="Nota promedio obtenida en las unidades del primer semestre (escala 0-20)")
-            unidades_2do_sem_matriculadas = st.number_input("Número de créditos matriculados en 2do Semestre", min_value=0, value=6, help="Número de unidades curriculares inscritas al inicio del segundo semestre")
-            unidades_2do_sem_evaluaciones = st.number_input("Número de créditos evaluados en 2do Semestre", min_value=0, value=6, help="Número de unidades que fueron evaluadas en el segundo semestre")
-            unidades_2do_sem_aprobadas = st.number_input("Número de créditos aprobados en 2do Semestre", min_value=0, value=6, help="Número de unidades que el estudiante aprobó en el segundo semestre")
-            unidades_2do_sem_nota = st.number_input("Nota promedio en 2do Semestre", min_value=0.0, max_value=20.0, value=12.0, help="Nota promedio obtenida en las unidades del segundo semestre (escala 0-20)")
-        
+            st.caption("Ingresa el rendimiento de los primeros dos semestres")
+            c_aca1, c_aca2 = st.columns(2)
+            with c_aca1:
+                st.markdown("##### 1er Semestre")
+                u1_mat = st.number_input("Créditos Matriculados (1er)", 0, 50, 6)
+                u1_eval = st.number_input("Créditos Evaluados (1er)", 0, 50, 6)
+                u1_aprob = st.number_input("Créditos Aprobados (1er)", 0, 50, 6)
+                u1_nota = st.number_input("Promedio (1er)", 0.0, 20.0, 12.0)
+            with c_aca2:
+                st.markdown("##### 2do Semestre")
+                u2_mat = st.number_input("Créditos Matriculados (2do)", 0, 50, 6)
+                u2_eval = st.number_input("Créditos Evaluados (2do)", 0, 50, 6)
+                u2_aprob = st.number_input("Créditos Aprobados (2do)", 0, 50, 6)
+                u2_nota = st.number_input("Promedio (2do)", 0.0, 20.0, 12.0)
+
         with tab3:
-            st.subheader("Datos de Entorno")
-            tasa_desempleo = st.number_input("Tasa de desempleo (%)", min_value=0.0, max_value=100.0, value=10.0, help="Tasa de desempleo en la región del estudiante")
-            tasa_inflacion = st.number_input("Tasa de inflación (%)", min_value=0.0, max_value=50.0, value=2.0, help="Tasa de inflación económica en la región")
-            pib = st.number_input("PIB (en miles)", min_value=0.0, value=50000.0, help="Producto Interno Bruto per cápita en la región (en miles de unidades monetarias)")
-        
-        submitted = st.form_submit_button("Ejecutar Análisis de riesgo académico")
-        st.markdown('</div>', unsafe_allow_html=True)
-        
-        if submitted:
-            if not nombre_estudiante.strip():
-                st.error("Debes ingresar el nombre del estudiante.")
-                return
-            
-            # Validaciones básicas
-            errores = []
-            if unidades_1er_sem_aprobadas > unidades_1er_sem_matriculadas:
-                errores.append("Número de créditos aprobados en 1er Semestre no puede exceder matriculados.")
-            if unidades_1er_sem_evaluaciones > unidades_1er_sem_matriculadas:
-                errores.append("Número de créditos evaluados en 1er Semestre no puede exceder matriculados.")
-            if unidades_2do_sem_aprobadas > unidades_2do_sem_matriculadas:
-                errores.append("Número de créditos aprobados en 2do Semestre no puede exceder matriculados.")
-            if unidades_2do_sem_evaluaciones > unidades_2do_sem_matriculadas:
-                errores.append("Número de créditos evaluados en 2do Semestre no puede exceder matriculados.")
-            if errores:
-                for error in errores:
-                    st.error(error)
-                return
-            
-            # Mapeo a valores numéricos
-            datos = {
-                'Modo_solicitud': modo_solicitud_map[modo_solicitud_sel],
-                'Orden_solicitud': orden_solicitud,
-                'Carrera': carrera_map[carrera_sel],
-                'Asistencia_diurna_nocturna': 1 if asistencia_diurna_nocturna == "Diurna" else 0,
-                'Calificacion_previa': calificacion_map[calificacion_previa_sel],
-                'Calificacion_madre': calificacion_map[calificacion_madre_sel],
-                'Calificacion_padre': calificacion_map[calificacion_padre_sel],
-                'Ocupacion_madre': ocupacion_map[ocupacion_madre_sel],
-                'Ocupacion_padre': ocupacion_map[ocupacion_padre_sel],
-                'Desplazado': 1 if desplazado == "Sí" else 0,
-                'Deudor': 1 if deudor == "Sí" else 0,
-                'Pagos_al_dia': 1 if pagos_al_dia == "Sí" else 0,
-                'Genero': 1 if genero == "Masculino" else 0,
-                'Becado': 1 if becado == "Sí" else 0,
-                'Edad_al_matricularse': edad_al_matricularse,
-                'Unidades_1er_sem_matriculadas': unidades_1er_sem_matriculadas,
-                'Unidades_1er_sem_evaluaciones': unidades_1er_sem_evaluaciones,
-                'Unidades_1er_sem_aprobadas': unidades_1er_sem_aprobadas,
-                'Unidades_1er_sem_nota': unidades_1er_sem_nota,
-                'Unidades_2do_sem_matriculadas': unidades_2do_sem_matriculadas,
-                'Unidades_2do_sem_evaluaciones': unidades_2do_sem_evaluaciones,
-                'Unidades_2do_sem_aprobadas': unidades_2do_sem_aprobadas,
-                'Unidades_2do_sem_nota': unidades_2do_sem_nota,
-                'Tasa_desempleo': tasa_desempleo,
-                'Tasa_inflacion': tasa_inflacion,
-                'PIB': pib
-            }
-            
-            # Integración con la API de FastAPI
-            # Preparar payload con todos los datos requeridos
-            payload = {
-                "nombre_estudiante": nombre_estudiante,
-                "umbral": umbral,
-                "Modo_solicitud": datos['Modo_solicitud'],
-                "Orden_solicitud": datos['Orden_solicitud'],
-                "Carrera": datos['Carrera'],
-                "Asistencia_diurna_nocturna": datos['Asistencia_diurna_nocturna'],
-                "Calificacion_previa": datos['Calificacion_previa'],
-                "Calificacion_madre": datos['Calificacion_madre'],
-                "Calificacion_padre": datos['Calificacion_padre'],
-                "Ocupacion_madre": datos['Ocupacion_madre'],
-                "Ocupacion_padre": datos['Ocupacion_padre'],
-                "Desplazado": datos['Desplazado'],
-                "Deudor": datos['Deudor'],
-                "Pagos_al_dia": datos['Pagos_al_dia'],
-                "Genero": datos['Genero'],
-                "Becado": datos['Becado'],
-                "Edad_al_matricularse": datos['Edad_al_matricularse'],
-                "Unidades_1er_sem_matriculadas": datos['Unidades_1er_sem_matriculadas'],
-                "Unidades_1er_sem_evaluaciones": datos['Unidades_1er_sem_evaluaciones'],
-                "Unidades_1er_sem_aprobadas": datos['Unidades_1er_sem_aprobadas'],
-                "Unidades_1er_sem_nota": datos['Unidades_1er_sem_nota'],
-                "Unidades_2do_sem_matriculadas": datos['Unidades_2do_sem_matriculadas'],
-                "Unidades_2do_sem_evaluaciones": datos['Unidades_2do_sem_evaluaciones'],
-                "Unidades_2do_sem_aprobadas": datos['Unidades_2do_sem_aprobadas'],
-                "Unidades_2do_sem_nota": datos['Unidades_2do_sem_nota'],
-                "Tasa_desempleo": datos['Tasa_desempleo'],
-                "Tasa_inflacion": datos['Tasa_inflacion'],
-                "PIB": datos['PIB']
-            }
-            
+            c_eco1, c_eco2, c_eco3 = st.columns(3)
+            with c_eco1:
+                tasa_desempleo = st.number_input(
+                    "Desempleo Regional (%)", 0.0, 50.0, 10.0
+                )
+            with c_eco2:
+                tasa_inflacion = st.number_input("Inflación (%)", 0.0, 100.0, 2.0)
+            with c_eco3:
+                pib = st.number_input("PIB Regional (k)", 0.0, 200000.0, 50000.0)
+
+        st.markdown("---")
+        submitted = st.form_submit_button(
+            "🔍 Analizar Riesgo", use_container_width=True
+        )
+
+    # --- LÓGICA DE ENVÍO ---
+    if submitted:
+        if not nombre_estudiante.strip():
+            st.error("⚠️ El nombre del estudiante es obligatorio.")
+            return
+
+        # 1. Validación de lógica académica
+        errores = []
+        if u1_aprob > u1_mat:
+            errores.append("1er Sem: Aprobados no puede ser mayor a Matriculados")
+        if u2_aprob > u2_mat:
+            errores.append("2do Sem: Aprobados no puede ser mayor a Matriculados")
+
+        if errores:
+            for e in errores:
+                st.error(f"❌ {e}")
+            return
+
+        # 2. Construcción del Payload
+        # Convertimos Si/No a 1/0 y mapeamos los selects
+        payload = {
+            "nombre_estudiante": nombre_estudiante,
+            "umbral": umbral,
+            # Mapeos directos
+            "Modo_solicitud": modo_solicitud_map[modo_solicitud_sel],
+            "Orden_solicitud": orden_solicitud,
+            "Carrera": carrera_map[carrera_sel],
+            "Calificacion_previa": calificacion_map[calificacion_previa_sel],
+            "Calificacion_madre": calificacion_map[calificacion_madre_sel],
+            "Calificacion_padre": calificacion_map[calificacion_padre_sel],
+            "Ocupacion_madre": ocupacion_map[ocupacion_madre_sel],
+            "Ocupacion_padre": ocupacion_map[ocupacion_padre_sel],
+            # Académicos
+            "Unidades_1er_sem_matriculadas": u1_mat,
+            "Unidades_1er_sem_evaluaciones": u1_eval,
+            "Unidades_1er_sem_aprobadas": u1_aprob,
+            "Unidades_1er_sem_nota": u1_nota,
+            "Unidades_2do_sem_matriculadas": u2_mat,
+            "Unidades_2do_sem_evaluaciones": u2_eval,
+            "Unidades_2do_sem_aprobadas": u2_aprob,
+            "Unidades_2do_sem_nota": u2_nota,
+            # Binarios
+            "Asistencia_diurna_nocturna": (
+                1 if asistencia_diurna_nocturna == "Diurna" else 0
+            ),
+            "Desplazado": 1 if desplazado == "Sí" else 0,
+            "Deudor": 1 if deudor == "Sí" else 0,
+            "Pagos_al_dia": 1 if pagos_al_dia == "Sí" else 0,
+            "Genero": 1 if genero == "Masculino" else 0,
+            "Becado": 1 if becado == "Sí" else 0,
+            # Numéricos simples
+            "Edad_al_matricularse": edad_al_matricularse,
+            "Tasa_desempleo": tasa_desempleo,
+            "Tasa_inflacion": tasa_inflacion,
+            "PIB": pib,
+        }
+
+        # 3. Consumo de API
+        with st.spinner("🧠 Consultando a EduGuard AI..."):  # type: ignore
             try:
-                # Hacer request a la API usando credenciales del usuario logueado
-                user_email = st.session_state.user_info["email"]
-                user_password = st.session_state.user_password
-                response = requests.post(f"{API_BASE_URL}/predict", json=payload, auth=(user_email, user_password))
+                user_email = st.session_state.user_info.get("email")
+                user_password = st.session_state.get("user_password")
+
+                response = requests.post(
+                    f"{API_BASE_URL}/predict",
+                    json=payload,
+                    auth=(user_email, user_password),
+                    timeout=10,
+                )
+
                 if response.status_code == 200:
-                    result = response.json()
-                    probabilidad = result["probability"]
-                    resultado = result["prediction"]
-                    explicaciones = result.get("explanations", {})
+                    data_res = response.json()
+                    probabilidad = data_res["probability"]
+                    resultado_ia = data_res["prediction"]
+                    explicaciones = data_res.get("explanations", {})
+
+                    # 4. GUARDADO EN BASE DE DATOS LOCAL (INTEGRACIÓN)
+                    exito_guardado = False
+                    if "user_info" in st.session_state:
+                        exito_guardado = guardar_prediccion(
+                            usuario_id=st.session_state.user_info["id"],
+                            nombre_est=nombre_estudiante.strip(),
+                            datos_dict=payload,
+                            prob=probabilidad,
+                            resultado=resultado_ia,
+                            umbral=umbral,
+                            explicaciones=explicaciones,
+                        )
+
+                    # --- VISUALIZACIÓN DE RESULTADOS ---
+                    st.divider()
+                    col_res, col_graf = st.columns([1, 2])
+
+                    with col_res:
+                        st.subheader("Diagnóstico")
+                        if resultado_ia == "Desertor":
+                            st.error(f"⚠️ **RIESGO ALTO**")
+                        else:
+                            st.success(f"✅ **BAJO RIESGO**")
+
+                        st.metric("Probabilidad de Deserción", f"{probabilidad:.2%}")
+
+                        if exito_guardado:
+                            st.toast("Predicción guardada en historial", icon="💾")
+                        else:
+                            st.warning(
+                                "Resultado mostrado pero no guardado en historial."
+                            )
+
+                    with col_graf:
+                        # Gráfico Gauge
+                        fig = go.Figure(
+                            go.Indicator(
+                                mode="gauge+number",
+                                value=probabilidad * 100,
+                                domain={"x": [0, 1], "y": [0, 1]},
+                                title={"text": "Nivel de Riesgo"},
+                                gauge={
+                                    "axis": {"range": [0, 100]},
+                                    "bar": {"color": "#1F2937"},
+                                    "steps": [
+                                        {
+                                            "range": [0, umbral * 100],
+                                            "color": "#10B981",
+                                        },  # Verde
+                                        {
+                                            "range": [umbral * 100, 100],
+                                            "color": "#EF4444",
+                                        },  # Rojo
+                                    ],
+                                    "threshold": {
+                                        "line": {"color": "black", "width": 4},
+                                        "thickness": 0.75,
+                                        "value": probabilidad * 100,
+                                    },
+                                },
+                            )
+                        )
+                        fig.update_layout(
+                            height=250, margin=dict(l=20, r=20, t=30, b=20)
+                        )
+                        st.plotly_chart(fig, use_container_width=True)
+
+                    # Gráfico de Factores (SHAP/Explicaciones)
+                    if explicaciones:
+                        st.subheader("🔍 Factores Determinantes")
+                        st.caption(
+                            "Variables que más empujaron la decisión del modelo (Positivo = Aumenta Riesgo)"
+                        )
+
+                        # Ordenar y filtrar top 5
+                        sorted_items = sorted(
+                            explicaciones.items(), key=lambda x: abs(x[1]), reverse=True
+                        )[:5]
+                        vars_n = [k for k, v in sorted_items]
+                        vars_v = [v for k, v in sorted_items]
+
+                        colors = ["#EF4444" if v > 0 else "#10B981" for v in vars_v]
+
+                        fig_bar = go.Figure(
+                            go.Bar(
+                                x=vars_v,
+                                y=vars_n,
+                                orientation="h",
+                                marker=dict(color=colors),
+                            )
+                        )
+                        fig_bar.update_layout(
+                            xaxis_title="Impacto en la probabilidad",
+                            height=300,
+                            margin=dict(l=0, r=0, t=0, b=0),
+                        )
+                        st.plotly_chart(fig_bar, use_container_width=True)
+
                 else:
-                    st.error(f"Error en la API: {response.status_code} - {response.text}")
-                    return
+                    st.error(f"Error del servidor: {response.text}")
+
             except requests.exceptions.RequestException as e:
-                st.error(f"Error conectando a la API: {e}")
-                return
-            
-            if probabilidad is not None:
-                st.success(f"Probabilidad de deserción: {probabilidad:.2%}")
-                st.info(f"Resultado con umbral {umbral:.2f}: {resultado}")
-                
-              
-                
-                # Gauge visual actualizado con el umbral ajustado
-                import plotly.graph_objects as go
-                fig = go.Figure(go.Indicator(
-                    mode="gauge+number",
-                    value=probabilidad * 100,
-                    title={'text': "Riesgo de Deserción"},
-                    gauge={'axis': {'range': [0, 100]},
-                           'bar': {'color': "darkblue"},
-                           'steps': [
-                               {'range': [0, umbral*100], 'color': "green"},
-                               {'range': [umbral*100, 100], 'color': "red"}]}
-                ))
-                st.plotly_chart(fig)
+                st.error(f"Error de conexión con el servicio de IA: {e}")
+            except Exception as e:
+                st.error(f"Error inesperado: {e}")
 
-                # Gráfico de barras de las variables más influyentes
-                st.subheader("Variables que más influyen en la predicción")
-                sorted_explicaciones = sorted(explicaciones.items(), key=lambda x: abs(x[1]), reverse=True)[:5]  # Top 5
-
-                if sorted_explicaciones:
-                    vars_names = [var for var, _ in sorted_explicaciones]
-                    vars_values = [val for _, val in sorted_explicaciones]
-
-                    fig = go.Figure(go.Bar(
-                        x=vars_values,
-                        y=vars_names,
-                        orientation='h',
-                        marker_color=['red' if v > 0 else 'green' for v in vars_values]
-                    ))
-                    fig.update_layout(
-                        xaxis_title="Contribución al riesgo",
-                        yaxis_title="Variable",
-                        height=300
-                    )
-                    st.plotly_chart(fig)
-                else:
-                    st.write("No se pudieron calcular las explicaciones detalladas.")
-            else:
-                st.error("Error en la predicción. Verifica los datos.")
-    
-    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown("</div>", unsafe_allow_html=True)
