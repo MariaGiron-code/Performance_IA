@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from src.api.models import PrediccionRequest, PrediccionResponse, UsuarioRequest, UsuarioResponse
 from src.api.dependencies import get_db, get_current_user, ejecutar_prediccion
-from src.database import guardar_prediccion, registrar_usuario
+from src.database import guardar_prediccion, registrar_usuario, obtener_estadisticas_monitoreo  
 from typing import Dict
 
 # Crear un router para agrupar los endpoints de la API
@@ -105,3 +105,14 @@ def get_user(user: Dict = Depends(get_current_user)):
     Útil para verificar la sesión o mostrar datos del perfil.
     """
     return UsuarioResponse(id=user['id'], username=user['nombre'], email=user['email'])
+
+@router.get("/monitoreo/stats")
+def get_monitoreo_stats(user: Dict = Depends(get_current_user)):
+    """
+    Devuelve las estadísticas generales del sistema.
+    """
+    stats = obtener_estadisticas_monitoreo()
+    if stats is None:
+        raise HTTPException(status_code=500, detail="Error al consultar estadísticas.")
+    
+    return stats

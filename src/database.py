@@ -128,3 +128,44 @@ def guardar_prediccion(usuario_id, nombre_est, datos_dict, prob, resultado, umbr
     except Exception as e:
         print(f"Error al guardar historial: {e}")
         return False
+    
+
+def obtener_estadisticas_monitoreo():
+    """
+    Consulta la BD para obtener métricas generales y el historial reciente.
+    """
+    try:
+        with engine.connect() as conn:
+            # 1. Totales
+            total = conn.execute(text("SELECT COUNT(*) FROM historial_predicciones")).scalar()
+            
+            # 2. Conteo por resultado (Desertor vs No Desertor)
+            query_riesgo = text("SELECT COUNT(*) FROM historial_predicciones WHERE resultado_ia = 'Desertor'")
+            riesgo = conn.execute(query_riesgo).scalar()
+            
+            # 3. Historial reciente (últimos 10)
+            query_historial = text("""
+                SELECT nombre_estudiante, resultado_ia, probabilidad
+                FROM historial_predicciones 
+                ORDER BY probabilidad DESC LIMIT 10
+            """)
+            historial_raw = conn.execute(query_historial).fetchall()
+            
+            # Formatear historial para JSON
+            historial = []
+            for fila in historial_raw:
+                historial.append({
+                    "nombre": fila[0],
+                    "resultado": fila[1],
+                    "probabilidad": float(fila[2])
+                })
+
+            return {
+                "total_evaluados": total,
+                "total_riesgo": riesgo,
+                "tasa_riesgo": (riesgo / total * 100) if total > 0 else 0,
+                "historial": historial
+            }
+    except Exception as e:
+        print(f"Error obteniendo estadísticas: {e}")
+        return None
