@@ -31,9 +31,7 @@ def vista_cambiar_pass():
             )
 
         # Botón de envío
-        submitted = st.form_submit_button(
-            "Actualizar Contraseña", use_container_width=True
-        )
+        submitted = st.form_submit_button("Actualizar Contraseña", width="stretch")
 
         if submitted:
             # 1. Validaciones del Frontend

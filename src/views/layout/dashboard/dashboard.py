@@ -47,9 +47,7 @@ def vista_dashboard():
         st.markdown("---")
 
         # 4. Botón de Logout
-        if st.button(
-                "Cerrar Sesión", key="btn_cerrar_sesion", use_container_width=True
-        ):
+        if st.button("Cerrar Sesión", key="btn_cerrar_sesion", width="stretch"):
             # Limpiar variables críticas
             keys_to_clear = ["logged_in", "user_info", "user_password"]
             for key in keys_to_clear:
@@ -80,6 +78,6 @@ def vista_dashboard():
         st.info("Esta funcionalidad estará disponible próximamente.")
 
     elif opcion == "Cambiar Contraseña":
-        from views.layout.dashboard.cambiar_contraseña import vista_cambiar_pass
+        from views.layout.dashboard.cambiar_password import vista_cambiar_pass
 
         vista_cambiar_pass()

@@ -1,122 +1,161 @@
-import streamlit as st
-import pandas as pd
+from pathlib import Path
+
 import joblib
 import matplotlib.pyplot as plt
+import pandas as pd
 import seaborn as sns
-from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
+import streamlit as st
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 from sklearn.model_selection import train_test_split
 
+# Configuración de Rutas
+BASE_DIR = Path(__file__).resolve().parent.parent.parent.parent.parent
+DATA_PATH = BASE_DIR / "data" / "processed" / "entrenamiento.csv"
+MODEL_PATH = BASE_DIR / "scripts" / "model" / "modelo_random_forest.pkl"
 
-def vista_metricas_modelo():
-    """
-    Genera la interfaz de usuario para visualizar las métricas del modelo de predicción de deserción académica.
-    
-    Esta función realiza las siguientes acciones:
-    1. Muestra un encabezado y descripción general de la sección
-    2. Carga el dataset procesado y el modelo entrenado
-    3. Prepara los datos para evaluación
-    4. Calcula métricas de rendimiento del modelo
-    5. Visualiza las métricas en tarjetas interactivas
-    6. Genera una matriz de confusión para analizar errores de clasificación
-    7. Muestra un reporte detallado de clasificación
-    8. Visualiza la importancia de las características para el modelo
-    9. Maneja errores de carga de datos o modelo
-    
-    Raises:
-        Exception: Si ocurre un error al cargar datos o modelo
-    """
-    st.write("## Métricas del Modelo")
-    st.info("Métricas de rendimiento del modelo Random Forest entrenado para predecir deserción académica.")
-    
-    # Cargar datos y modelo
-    try:
-        # Cargar dataset procesado (datos de entrenamiento etiquetados)
-        df = pd.read_csv('data/processed/entrenamiento.csv')
-        
-        # Cargar modelo entrenado (Random Forest)
-        modelo = joblib.load('model/modelo_a.pkl')
-        
-        # Preparar datos para evaluación
-        objetivo = 'Es_Desertor'  # Nombre de la variable objetivo (0: No Desertor, 1: Desertor)
-        x = df.drop(columns=[objetivo])  # Variables predictoras
-        y = df[objetivo]  # Variable objetivo
-        
-        # Dividir datos en conjuntos de entrenamiento y prueba (mismo split que en el notebook)
-        x_train, x_test, y_train, y_test = train_test_split(
-            x, y, 
-            test_size=0.2,  # 20% de los datos para prueba
-            random_state=42,  # Semilla aleatoria para reproducibilidad
-            stratify=y  # Mantener proporción de clases en ambos conjuntos
+
+# Funciones con Caché (Mejora de Rendimiento)
+@st.cache_data(show_spinner="Cargando dataset de entrenamiento...")
+def cargar_datos():
+    if not DATA_PATH.exists():
+        raise FileNotFoundError(f"No se encontró el archivo de datos en: {DATA_PATH}")
+    return pd.read_csv(DATA_PATH)
+
+
+@st.cache_resource(show_spinner="Cargando modelo de IA...")
+def cargar_modelo():
+    if not MODEL_PATH.exists():
+        raise FileNotFoundError(
+            f"No se encontró el archivo del modelo en: {MODEL_PATH}"
         )
-        
-        # Realizar predicciones con el modelo
-        y_pred = modelo.predict(x_test)
-        
-        # Calcular métricas principales de rendimiento
-        accuracy = accuracy_score(y_test, y_pred)  # Exactitud general
-        reporte = classification_report(y_test, y_pred, output_dict=True)
-        precision = reporte['1']['precision']  # Precisión para la clase "Desertor"
-        recall = reporte['1']['recall']  # Sensibilidad para la clase "Desertor"
-        f1_score = reporte['1']['f1-score']  # Puntuación F1 para la clase "Desertor"
+    return joblib.load(MODEL_PATH)
 
-        st.info("""
-        **Explicación de las métricas:**
-        - **Exactitud (Accuracy):** Porcentaje total de predicciones correctas (tanto de desertores como no desertores).
-        - **Precisión:** Probabilidad de que un estudiante etiquetado como "Desertor" realmente sea un desertor (evita falsos positivos).
-        - **Sensibilidad (Recall):** Probabilidad de identificar correctamente a los estudiantes que realmente son desertores (evita falsos negativos).
-        - **Puntuación F1:** Balance entre precisión y sensibilidad; ideal para datos desbalanceados (como este caso de deserción académica).
-        """)
-        
-        # Mostrar métricas en tarjetas interactivas
+
+# Se genera la interfaz visual
+def vista_metricas_modelo():
+    st.markdown("## 📊 Métricas del Modelo")
+    st.info(
+        "Rendimiento del modelo Random Forest entrenado para predecir deserción académica."
+    )
+
+    try:
+        # 1. Carga optimizada de recursos
+        df = cargar_datos()
+        modelo = cargar_modelo()
+
+        # 2. Preparación de datos
+        objetivo = "Es_Desertor"
+
+        # Validación básica de columnas
+        if objetivo not in df.columns:
+            st.error(f"El dataset no contiene la columna objetivo '{objetivo}'")
+            return
+
+        X = df.drop(columns=[objetivo])
+        y = df[objetivo]
+
+        X_train, X_test, y_train, y_test = train_test_split(
+            X, y, test_size=0.2, random_state=42, stratify=y
+        )
+
+        # 3. Predicciones
+        y_pred = modelo.predict(X_test)
+
+        # 4. Cálculo de Métricas
+        accuracy = accuracy_score(y_test, y_pred)
+        reporte = classification_report(y_test, y_pred, output_dict=True)
+
+        # Extracción de métricas para la clase positiva (1: Desertor)
+        metricas_clase_1 = reporte.get("1", {})
+        precision = metricas_clase_1.get("precision", 0)
+        recall = metricas_clase_1.get("recall", 0)
+        f1_score = metricas_clase_1.get("f1-score", 0)
+
+        # Explicación desplegable para ahorrar espacio visual
+        with st.expander("ℹ¿Qué significan estas métricas?"):
+            st.markdown("""
+            - **Exactitud (Accuracy):** % global de aciertos.
+            - **Precisión:** De los que la IA dijo "Desertará", ¿cuántos realmente lo hicieron?
+            - **Sensibilidad (Recall):** De todos los que realmente desertaron, ¿a cuántos detectó la IA?
+            - **F1-Score:** Equilibrio entre Precisión y Sensibilidad.
+            """)
+
+        # 5. Tarjetas de Métricas (KPIs)
         col1, col2, col3, col4 = st.columns(4)
-        col1.metric("Exactitud (Accuracy)", f"{accuracy:.2%}")
-        col2.metric("Precisión", f"{precision:.2%}")
-        col3.metric("Sensibilidad (Recall)", f"{recall:.2%}")
-        col4.metric("Puntuación F1", f"{f1_score:.2%}")
-        
-        # Visualizar matriz de confusión
-        st.write("### Matriz de Confusión")
-        fig, ax = plt.subplots(figsize=(8, 6))
-        cm = confusion_matrix(y_test, y_pred)  # Matriz de confusión
-        sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', ax=ax,
-                   xticklabels=['No Desertor', 'Desertor'],
-                   yticklabels=['No Desertor', 'Desertor'])
-        plt.xlabel("Clase Predicha")
-        plt.ylabel("Clase Real")
-        st.pyplot(fig)
-        
-        # Mostrar reporte de clasificación detallado
-        st.write("### Reporte de Clasificación")
-        df_reporte = pd.DataFrame(reporte).T
-        df_reporte = df_reporte.rename(index={
-            "0": "Clase 0 (No Desertor)",
-            "1": "Clase 1 (Desertor)",
-            "accuracy": "Exactitud",
-            "macro avg": "Promedio Macro",
-            "weighted avg": "Promedio Ponderado"
-        })
-        df_reporte = df_reporte.rename(columns={
-            "precision": "Precisión",
-            "recall": "Sensibilidad",
-            "f1-score": "Puntuación F1",
-            "support": "Soporte"
-        })
-        st.dataframe(df_reporte.style.format("{:.4f}"))
-        
-        # Visualizar importancia de características
-        st.write("### Importancia de Características")
-        importancias = modelo.feature_importances_  # Importancia de cada característica
-        nombres_caracteristicas = modelo.feature_names_in_  # Nombres de las características
-        df_importancia = pd.DataFrame({
-            'Característica': nombres_caracteristicas,
-            'Importancia': importancias
-        })
-        df_importancia = df_importancia.sort_values(by='Importancia', ascending=False).head(10)
-        
-        fig, ax = plt.subplots(figsize=(10, 6))
-        sns.barplot(x='Importancia', y='Característica', data=df_importancia, ax=ax)
-        plt.title("Top 10 Características Más Importantes")
-        st.pyplot(fig)
-        
+        col1.metric("Exactitud", f"{accuracy:.1%}", help="Aciertos totales")
+        col2.metric(
+            "Precisión", f"{precision:.1%}", help="Calidad de la alarma de deserción"
+        )
+        col3.metric("Sensibilidad", f"{recall:.1%}", help="Capacidad de detección")
+        col4.metric("F1-Score", f"{f1_score:.1%}", help="Balance general")
+
+        st.markdown("---")
+
+        # 6. Gráficos
+        col_graf1, col_graf2 = st.columns([1, 1])
+
+        with col_graf1:
+            st.markdown("### 🔍 Matriz de Confusión")
+            fig_cm, ax_cm = plt.subplots(figsize=(5, 4))
+            cm = confusion_matrix(y_test, y_pred)
+            sns.heatmap(
+                cm,
+                annot=True,
+                fmt="d",
+                cmap="Blues",
+                ax=ax_cm,
+                xticklabels=["No Desertor", "Desertor"],
+                yticklabels=["No Desertor", "Desertor"],
+                cbar=False,
+            )
+            plt.ylabel("Realidad")
+            plt.xlabel("Predicción IA")
+            st.pyplot(fig_cm)
+            plt.close(fig_cm)
+
+        with col_graf2:
+            st.markdown("### Importancia de Variables")
+            try:
+                if hasattr(modelo, "feature_importances_"):
+                    importancias = modelo.feature_importances_
+                    nombres = (
+                        modelo.feature_names_in_
+                        if hasattr(modelo, "feature_names_in_")
+                        else X.columns
+                    )
+
+                    df_imp = pd.DataFrame(
+                        {"Variable": nombres, "Importancia": importancias}
+                    )
+                    df_imp = df_imp.sort_values("Importancia", ascending=False).head(10)
+
+                    fig_imp, ax_imp = plt.subplots(figsize=(5, 4))
+                    sns.barplot(
+                        x="Importancia",
+                        y="Variable",
+                        data=df_imp,
+                        ax=ax_imp,
+                        palette="viridis",
+                    )
+                    plt.title("Top 10 Factores de Riesgo")
+                    st.pyplot(fig_imp)
+                    plt.close(fig_imp)
+                else:
+                    st.warning(
+                        "Este modelo no soporta visualización de importancia de características."
+                    )
+            except Exception as e:
+                st.warning(f"No se pudieron cargar las importancias: {e}")
+
+        # 7. Tabla detallada
+        with st.expander("Ver reporte técnico detallado"):
+            df_reporte = pd.DataFrame(reporte).T
+            st.dataframe(df_reporte.style.format("{:.4f}"))
+
+    except FileNotFoundError as e:
+        st.error(f"⚠Error de archivo: {e}")
+        st.info(
+            "Verifica que los archivos 'entrenamiento.csv' y 'modelo_a.pkl' estén en las carpetas 'data/processed' y 'model' respectivamente."
+        )
     except Exception as e:
-        st.error(f"Error al cargar las métricas: {e}")
+        st.error(f"Error inesperado al generar métricas: {e}")
