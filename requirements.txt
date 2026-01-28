@@ -18,6 +18,7 @@ fastapi         # Construye APIs modernas y de alto rendimiento basadas en está
 uvicorn         # Ejecuta la aplicación como un servidor ASGI asíncrono y ligero.
 pydantic        # Valida datos y gestiona ajustes mediante anotaciones de tipos de Python.
 bcrypt          # Hashea contraseñas de forma segura para la autenticación de usuarios.
+requests        # Peticiones desde el Backend - Frontend
 
 # --- Base de Datos ---
 sqlalchemy      # Gestiona la base de datos mediante un ORM (Mapeo Objeto-Relacional).

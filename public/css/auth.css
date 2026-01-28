@@ -153,8 +153,44 @@
 div[data-testid="column"]:has(.login-logo-section),
 div[data-testid="column"]:has(.registro-logo-section),
 div[data-testid="column"]:has(.login-form-section),
-div[data-testid="column"]:has(.registro-form-section) {
-    flex: 1 1 50% !important;
-    max-width: 50% !important;
+
+    /* Por defecto (Móviles): Las columnas ocupan el 100% y se apilan */
+.login-logo-section,
+.registro-logo-section,
+.login-form-section,
+.registro-form-section {
+    padding: 1rem; /* Menos padding en móviles */
+    min-height: auto; /* Altura automática en móviles */
+}
+
+.login-logo-section img,
+.registro-logo-section img {
+    max-height: 200px; /* Limitar altura del logo en móviles */
+    width: auto;
+    margin: 0 auto;
+}
+
+/* Solo para Pantallas Grandes (Escritorio/Laptop > 768px) */
+@media (min-width: 768px) {
+
+    .login-form-section,
+    .registro-form-section {
+        padding: 2rem 2rem 2rem 4rem;
+        min-height: calc(100vh - 4rem);
+    }
+
+    .login-logo-section,
+    .registro-logo-section {
+        min-height: calc(100vh - 4rem);
+    }
+
+    /* Aquí aplicamos la fuerza del 50% SOLO si es pantalla grande */
+    div[data-testid="column"]:has(.login-logo-section),
+    div[data-testid="column"]:has(.registro-logo-section),
+    div[data-testid="column"]:has(.login-form-section),
+    div[data-testid="column"]:has(.registro-form-section) {
+        flex: 1 1 50% !important;
+        max-width: 50% !important;
+    }
 }
 
