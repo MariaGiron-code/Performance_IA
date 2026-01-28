@@ -1,18 +1,43 @@
-# Python
+# Archivos Python
 __pycache__/
 *.py[cod]
 *$py.class
-venv/
-.venv/
-env/
-.vscode
-.idea
-# Variables de entorno (Seguridad)
-.env
+*.so
 
-# Archivos de sistema
+# ENV
+.venv/
+venv/
+env/
+ENV/
+bin/
+lib/
+.env
+.env.local
+.env.*
+!.env.example
+
+# Configuración de IDE's
+.idea/
+.vscode/
+*.swp
+*.swo
+
+
+# Archivos SO
 .DS_Store
 Thumbs.db
+desktop.ini
 
-# Datos y modelos (Opcional solo si son muy pesados)
-# data/raw/*.csv PONEN EN EL .gitignore PARA QUE NO SE SUBAN AL REPOSITORIO SI SON DEMASIADO PESADOS
+# Datos de entrenamiento muy pesados
+data/raw/
+data/processed/
+*.csv
+*.joblib
+*.pkl
+*.ipynb_checkpoints/
+
+# Logs
+*.log
+htmlcov/
+.tox/
+.coverage
