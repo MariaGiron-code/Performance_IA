@@ -1,21 +1,24 @@
-# requerimientos para el proyecto (librerías necesarias para el proyecto)
-# se instalan con el comando: pip install -r requirements.txt
-# para actualizar las librerías se instalan con el comando: pip install --upgrade -r requirements.txt
-# para desinstalar una librería se desinstala con el comando: pip uninstall <nombre_de_la_libreria>
+# --- Core y Utilidades ---
+python-dotenv   # Carga variables de entorno desde archivos .env para la configuración segura.
+joblib          # Serializa y deserializa objetos de Python; optimiza el guardado de modelos.
 
-# si necesitas instalar una librería, añade el nombre de la librería al final del archivo requirements.txt
-streamlit
-pandas
-scikit-learn
-sqlalchemy
-psycopg2-binary
-python-dotenv
-joblib
-matplotlib
-seaborn
-bcrypt
-plotly
-shap # Librería para explicabilidad de modelos ML utilizando valores SHAP(los valores SHAP ayudan a entender la contribución de cada característica en las predicciones del modelo).
-fastapi # Framework principal para construir la API.
-uvicorn  # Servidor ASGI para correr la API (un server ASGI es un servidor asíncrono).
-pydantic # Validación de datos y manejo de configuraciones de la API.
+# --- Ciencia de Datos y Machine Learning ---
+pandas          # Manipula y analiza estructuras de datos estructurados (DataFrames).
+scikit-learn    # Provee herramientas y algoritmos para minería de datos y aprendizaje automático.
+shap            # Explica las predicciones de los modelos de ML mediante valores SHAP.
+
+# --- Visualización y Dashboards ---
+matplotlib      # Genera gráficos estáticos básicos y visualizaciones de datos en 2D.
+seaborn         # Crea gráficos estadísticos atractivos basados en Matplotlib.
+plotly          # Habilita gráficos interactivos y dinámicos para la web.
+streamlit       # Construye aplicaciones web de datos y dashboards interactivos rápidamente.
+
+# --- API y Backend (FastAPI) ---
+fastapi         # Construye APIs modernas y de alto rendimiento basadas en estándares.
+uvicorn         # Ejecuta la aplicación como un servidor ASGI asíncrono y ligero.
+pydantic        # Valida datos y gestiona ajustes mediante anotaciones de tipos de Python.
+bcrypt          # Hashea contraseñas de forma segura para la autenticación de usuarios.
+
+# --- Base de Datos ---
+sqlalchemy      # Gestiona la base de datos mediante un ORM (Mapeo Objeto-Relacional).
+psycopg2-binary # Conecta Python con bases de datos PostgreSQL (adaptador binario).

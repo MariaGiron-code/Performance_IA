@@ -16,5 +16,3 @@ if __name__ == "__main__":
     # - reload=False: No recarga automática en producción
     uvicorn.run("src.api.main:app", host="0.0.0.0", port=port, reload=False)
 
-## DESPUES DE ACABBAR TODO EL DESARROLLOR DE APP SE VA HACER EL DESPLIGUE DE LA API DEL MODELO Y LA APP DE STREAMLIT 
-# POR EL MOMENTO LO EJECTAN EN EL LOCAL 
