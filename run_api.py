@@ -1,18 +1,12 @@
-# Este script es el punto de entrada para ejecutar la API de FastAPI.
-# Utiliza uvicorn para servir la aplicación definida en src.api.main:app.
-# Configurado para despliegue en Render con puerto dinámico.
-
 import os
+
 import uvicorn
 
 if __name__ == "__main__":
-    # Puerto dinámico para Render (usa 8000 por defecto en local)
-    port = int(os.environ.get("PORT", 8000))
+    HOST = "0.0.0.0"  # CONSTANTES DE CONFIGURACIÓN
+    PORT = int(os.getenv("PORT", 8000))  # PUERTO POR DEFECTO DEL ENTORNO (8000)
+    APP_MODULE = "src.api.main:app"
 
-    # Ejecutar la aplicación FastAPI con uvicorn
-    # - app: "src.api.main:app" apunta al módulo y la instancia de FastAPI
-    # - host="0.0.0.0": Escucha en todas las interfaces
-    # - port: Puerto dinámico de Render
-    # - reload=False: No recarga automática en producción
-    uvicorn.run("src.api.main:app", host="0.0.0.0", port=port, reload=False)
-
+    # Inicia el servidor Uvicorn deshabilitando la recarga automática para producción.
+    # Configura el nivel de logs para garantizar visibilidad en el despliegue.
+    uvicorn.run(APP_MODULE, host=HOST, port=PORT, log_level="info")
