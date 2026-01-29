@@ -21,7 +21,7 @@ from src.logic import ejecutar_prediccion
 router = APIRouter()
 
 
-# --- Rutas de Predicción ---
+# Rutas de Predicción
 @router.post(
     "/predict",
     response_model=PrediccionResponse,

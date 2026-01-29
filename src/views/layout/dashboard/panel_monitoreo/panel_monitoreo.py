@@ -114,7 +114,7 @@ def vista_panel_monitoreo():
                 ]
             )
             fig.update_layout(margin=dict(t=20, b=20, l=20, r=20), height=300)
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig)
         else:
             st.info("Esperando datos para generar gráficos...")
 
@@ -144,10 +144,7 @@ def vista_panel_monitoreo():
 
             # Configuración avanzada de la tabla
             st.dataframe(
-                df_hist[["Estudiante", "Diagnóstico", "Riesgo"]].head(
-                    10
-                ),  # Solo los últimos 10
-                use_container_width=True,
+                df_hist[["Estudiante", "Diagnóstico", "Riesgo"]].head(10),
                 height=300,
                 hide_index=True,
                 column_config={

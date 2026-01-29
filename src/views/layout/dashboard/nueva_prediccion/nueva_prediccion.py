@@ -161,9 +161,7 @@ def vista_nueva_prediccion():
                 pib = st.number_input("PIB Regional (k)", 0.0, 200000.0, 50000.0)
 
         st.markdown("---")
-        submitted = st.form_submit_button(
-            "🔍 Analizar Riesgo", use_container_width=True
-        )
+        submitted = st.form_submit_button("🔍 Analizar Riesgo", width="stretch")
 
     # --- LÓGICA DE ENVÍO ---
     if submitted:
@@ -306,7 +304,7 @@ def vista_nueva_prediccion():
                         fig.update_layout(
                             height=250, margin=dict(l=20, r=20, t=30, b=20)
                         )
-                        st.plotly_chart(fig, use_container_width=True)
+                        st.plotly_chart(fig)
 
                     # Gráfico de Factores (SHAP/Explicaciones)
                     if explicaciones:
@@ -337,7 +335,7 @@ def vista_nueva_prediccion():
                             height=300,
                             margin=dict(l=0, r=0, t=0, b=0),
                         )
-                        st.plotly_chart(fig_bar, use_container_width=True)
+                        st.plotly_chart(fig_bar)
 
                 else:
                     st.error(f"Error del servidor: {response.text}")

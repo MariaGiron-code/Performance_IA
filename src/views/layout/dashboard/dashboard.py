@@ -59,17 +59,23 @@ def vista_dashboard():
 
     # ROUTER (Carga de Vistas)
     if opcion == "Panel de Monitoreo":
-        from views.layout.dashboard.panel_monitoreo import vista_panel_monitoreo
+        from src.views.layout.dashboard.panel_monitoreo.panel_monitoreo import (
+            vista_panel_monitoreo,
+        )
 
         vista_panel_monitoreo()
 
     elif opcion == "Nueva Predicción":
-        from views.layout.dashboard.nueva_prediccion import vista_nueva_prediccion
+        from src.views.layout.dashboard.nueva_prediccion.nueva_prediccion import (
+            vista_nueva_prediccion,
+        )
 
         vista_nueva_prediccion()
 
     elif opcion == "Métricas del modelo":
-        from views.layout.dashboard.metricas_modelo import vista_metricas_modelo
+        from src.views.layout.dashboard.metricas_modelo.metricas_modelo import (
+            vista_metricas_modelo,
+        )
 
         vista_metricas_modelo()
 
@@ -78,6 +84,8 @@ def vista_dashboard():
         st.info("Esta funcionalidad estará disponible próximamente.")
 
     elif opcion == "Cambiar Contraseña":
-        from views.layout.dashboard.cambiar_password import vista_cambiar_pass
+        from src.views.layout.dashboard.cambiar_password.cambiar_password import (
+            vista_cambiar_pass,
+        )
 
         vista_cambiar_pass()
