@@ -127,7 +127,7 @@ pip install -r requirements.txt
 
 ```env
 URL_API_BACKEND=http://localhost:8000
-DB_URL="postgresql://usuario:contraseña*408@localhost:5432/postgres"
+DB_URL="postgresql://usuario:contraseña@localhost:5432/postgres"
 
 ```
 
@@ -141,4 +141,5 @@ streamlit run src/main.py
 ---
 
 © 2026 - Escuela Politécnica Nacional - Fundamentos de Inteligencia Artificial
+
 
