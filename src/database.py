@@ -119,13 +119,13 @@ def cambiar_password(email: str, current_pass: str, new_pass: str) -> bool:
 
 # Historial y Analítica
 def guardar_prediccion(
-        usuario_id: int,
-        nombre_est: str,
-        datos_dict: Dict,
-        prob: float,
-        resultado: str,
-        umbral: float,
-        explicaciones: Dict,
+    usuario_id: int,
+    nombre_est: str,
+    datos_dict: Dict,
+    prob: float,
+    resultado: str,
+    umbral: float,
+    explicaciones: Dict,
 ) -> bool:
     query = text("""
                  INSERT INTO historial_predicciones

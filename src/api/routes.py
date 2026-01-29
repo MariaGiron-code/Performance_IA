@@ -3,6 +3,7 @@ from typing import Annotated, Dict
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from src.api.dependencies import get_current_user
+
 # Importaciones internas del proyecto
 from src.api.models import (
     PrediccionRequest,
@@ -29,8 +30,8 @@ router = APIRouter()
     summary="Evaluar riesgo de deserción",
 )
 def predict(
-        request: PrediccionRequest,
-        current_user: Annotated[Dict, Depends(get_current_user)],
+    request: PrediccionRequest,
+    current_user: Annotated[Dict, Depends(get_current_user)],
 ):
     try:
         # 1. Extracción de Datos

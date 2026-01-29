@@ -9,7 +9,7 @@ from sklearn.metrics import accuracy_score, classification_report, confusion_mat
 from sklearn.model_selection import train_test_split
 
 # Configuración de Rutas
-BASE_DIR = Path(__file__).resolve().parent.parent.parent.parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent.parent.parent.parent.parent
 DATA_PATH = BASE_DIR / "data" / "processed" / "entrenamiento.csv"
 MODEL_PATH = BASE_DIR / "scripts" / "model" / "modelo_random_forest.pkl"
 
@@ -133,9 +133,11 @@ def vista_metricas_modelo():
                     sns.barplot(
                         x="Importancia",
                         y="Variable",
+                        hue="Variable",
                         data=df_imp,
                         ax=ax_imp,
                         palette="viridis",
+                        legend=False,
                     )
                     plt.title("Top 10 Factores de Riesgo")
                     st.pyplot(fig_imp)
@@ -153,7 +155,7 @@ def vista_metricas_modelo():
             st.dataframe(df_reporte.style.format("{:.4f}"))
 
     except FileNotFoundError as e:
-        st.error(f"⚠Error de archivo: {e}")
+        st.error(f"Error de archivo: {e}")
         st.info(
             "Verifica que los archivos 'entrenamiento.csv' y 'modelo_a.pkl' estén en las carpetas 'data/processed' y 'model' respectivamente."
         )

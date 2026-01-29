@@ -100,7 +100,7 @@ def main():
 
     # Aquí se crea la variable objetivo binaria: 1 si es Desertor, 0 si se Graduó.
     df_entrenamiento["Es_Desertor"] = (
-            df_entrenamiento["Objetivo"] == "Dropout"
+        df_entrenamiento["Objetivo"] == "Dropout"
     ).astype(int)
 
     # Limpieza de Columnas
