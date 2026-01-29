@@ -1,16 +1,18 @@
 # 🎓 EduGuard AI: Sistema de Predicción de Deserción Académica
 
-**EduGuard AI** es una solución integral basada en Inteligencia Artificial diseñada para detectar tempranamente el riesgo de deserción estudiantil. Mediante el uso de modelos de Machine Learning (Random Forest) y una interfaz web interactiva, permitimos a las instituciones educativas identificar estudiantes en riesgo y tomar medidas preventivas basadas en datos.
+**EduGuard AI** es una solución integral basada en Inteligencia Artificial diseñada para detectar tempranamente el riesgo de deserción
+estudiantil. Mediante el uso de modelos de Machine Learning (Random Forest) y una interfaz web interactiva, permitimos a las instituciones
+educativas identificar estudiantes en riesgo y tomar medidas preventivas basadas en datos.
 
 ---
 
 ## 🔗 Enlaces del Proyecto
 
-| Recurso | Enlace |
-| --- | --- |
+| Recurso                      | Enlace                                                                                   |
+|------------------------------|------------------------------------------------------------------------------------------|
 | **🌐 Sistema en Producción** | [Ver Aplicación Web](https://www.google.com/search?q=AQU%C3%8D_TU_ENLACE_AL_SISTEMA_WEB) |
-| **📺 Demo en Video** | [Ver en YouTube](https://www.google.com/search?q=AQU%C3%8D_TU_ENLACE_DE_YOUTUBE) |
-| **📄 Informe Técnico** | [Ver PDF en Drive](https://www.google.com/search?q=AQU%C3%8D_TU_ENLACE_DE_GOOGLE_DRIVE) |
+| **📺 Demo en Video**         | [Ver en YouTube](https://www.google.com/search?q=AQU%C3%8D_TU_ENLACE_DE_YOUTUBE)         |
+| **📄 Informe Técnico**       | [Ver PDF en Drive](https://www.google.com/search?q=AQU%C3%8D_TU_ENLACE_DE_GOOGLE_DRIVE)  |
 
 ---
 
@@ -27,7 +29,8 @@ Proyecto desarrollado como parte de las actividades académicas en la **Escuela 
 
 ## 🚀 Características del Sistema
 
-El sistema cuenta con una arquitectura moderna dividida en Frontend (Streamlit) y Backend (FastAPI + Base de Datos), ofreciendo las siguientes funcionalidades:
+El sistema cuenta con una arquitectura moderna dividida en Frontend (Streamlit) y Backend (FastAPI + Base de Datos), ofreciendo las siguientes
+funcionalidades:
 
 ### 1. 🔐 Autenticación Segura
 
@@ -46,7 +49,8 @@ El sistema cuenta con una arquitectura moderna dividida en Frontend (Streamlit) 
 
 * Formulario intuitivo dividido en tres dimensiones: **Socio-demográfica, Académica y Entorno**.
 * **Control de Sensibilidad:** Slider para ajustar el umbral de decisión del modelo (falsos positivos vs. falsos negativos).
-* **Explicabilidad (XAI):** Gráficos que muestran qué variables influyeron más en la decisión (e.g., promedio del 1er semestre, desempleo regional).
+* **Explicabilidad (XAI):** Gráficos que muestran qué variables influyeron más en la decisión (e.g., promedio del 1.er semestre, desempleo
+  regional).
 * Integración directa con Base de Datos para guardar cada predicción.
 
 ### 4. 📈 Métricas del Modelo
@@ -78,13 +82,11 @@ Para este proyecto se ha seguido una estrategia de ramificación específica par
 ---
 
 ### **Optimizaciones incluidas en esta rama:**
+
 * Refactorización del manejo de conexiones a Base de Datos (SQLAlchemy Transactions).
 * Implementación de sistemas de Caché (`st.cache_data`) para reducir latencia.
 * Mejoras en la experiencia de usuario (UX) y validaciones de formularios.
 * Corrección de rutas relativas para despliegue en la nube.
-
-
-
 
 > **Nota:** La versión desplegada en el enlace de producción corresponde al código estable de la rama `jossu`.
 
@@ -95,14 +97,15 @@ Para este proyecto se ha seguido una estrategia de ramificación específica par
 Si deseas correr este proyecto en tu máquina local:
 
 1. **Clonar el repositorio:**
+
 ```bash
 git clone https://github.com/MariaGiron-code/Performance_IA.git
 cd Performance_IA
 
 ```
 
-
 2. **Crear entorno virtual:**
+
 ```bash
 python -m venv venv
 source venv/bin/activate
@@ -110,30 +113,28 @@ venv\Scripts\activate       # En Windows
 
 ```
 
-
 3. **Instalar dependencias:**
+
 ```bash
 pip install -r requirements.txt
 
 ```
 
-
 4. **Configurar variables de entorno:**
-Crea un archivo `.env` en la raíz y configura la URL del backend:
+   Crea un archivo `.env` en la raíz y configura la URL del backend:
+
 ```env
 URL_API_BACKEND=http://localhost:8000
 DB_URL="postgresql://usuario:contraseña*408@localhost:5432/postgres"
 
 ```
 
-
 5. **Ejecutar la aplicación:**
+
 ```bash
 streamlit run src/main.py
 
 ```
-
-
 
 ---
 
