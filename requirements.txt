@@ -23,3 +23,5 @@ requests        # Peticiones desde el Backend - Frontend
 # --- Base de Datos ---
 sqlalchemy      # Gestiona la base de datos mediante un ORM (Mapeo Objeto-Relacional).
 psycopg2-binary # Conecta Python con bases de datos PostgreSQL (adaptador binario).
+
+gunicorn        # Servidor WSGI para desplegar aplicaciones web Python en producción.
