@@ -12,9 +12,9 @@ educativas identificar estudiantes en riesgo y tomar medidas preventivas basadas
 
 | Recurso                      | Enlace                                                                                   |
 |------------------------------|------------------------------------------------------------------------------------------|
-| **🌐 Sistema en Producción** | [Ver Aplicación Web](https://www.google.com/search?q=AQU%C3%8D_TU_ENLACE_AL_SISTEMA_WEB) |
-| **📺 Demo en Video**         | [Ver en YouTube](https://www.google.com/search?q=AQU%C3%8D_TU_ENLACE_DE_YOUTUBE)         |
-| **📄 Informe Técnico**       | [Ver PDF en Drive](https://www.google.com/search?q=AQU%C3%8D_TU_ENLACE_DE_GOOGLE_DRIVE)  |
+| **🌐 Sistema en Producción** | [Ver Aplicación Web](https://performance-ia.onrender.com/)
+| **📺 Demo en Video**         | [Ver en YouTubez()         |
+| **📄 Informe Técnico**       | [Ver PDF en Drive](https://1drv.ms/w/c/d72e714d07308a98/IQAsF4iFEjdaTL5c3YUCaleKAVxkXWXAG5BRjErCpdtYNQk?e=DW8PxY)  |
 
 ---
 
@@ -141,5 +141,6 @@ streamlit run src/main.py
 ---
 
 © 2026 - Escuela Politécnica Nacional - Fundamentos de Inteligencia Artificial
+
 
 
