@@ -11,5 +11,3 @@ services:
         value: https://eduguard-ai.onrender.com
       - key: DB_URL
         value: postgresql://neondb_owner:npg_LyZMEwV9hB1T@ep-wispy-tooth-ahde5zcu-pooler.c-3.us-east-1.aws.neon.tech/DB_Performance_IA?sslmode=require
-      - key: SECRET_KEY
-        value: 8f4e9c2a7b5d1f3e6a8b4c9d2e5f7a1b3c6d8e9f2a4b7c5d1e3f6a8b4c9d2e5f
